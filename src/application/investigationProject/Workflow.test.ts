@@ -4,11 +4,14 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { elf } from "../../domain/binaryTarget.fixture.js";
+import { elf, fat } from "../../domain/binaryTarget.fixture.js";
 import { validatePluginManifest } from "../../domain/pluginContract.js";
 import { interpretEvidenceWithAi } from "./AiProvider.js";
 import { probeAnalysisBackends } from "./BackendProbe.js";
-import { createInvestigationProject } from "./ProjectStore.js";
+import {
+  createInvestigationProject,
+  saveInvestigationJob,
+} from "./ProjectStore.js";
 import {
   importInvestigationTarget,
   inspectInvestigationTarget,
@@ -24,7 +27,10 @@ describe("investigation project workflow", () => {
     const created = await createInvestigationProject(root, "demo");
     expect(created.ok).toBe(true);
     const targetPath = join(root, "sample.so");
-    await writeFile(targetPath, Buffer.concat([elf(2, 1, 183), Buffer.from("HelloREA")]));
+    await writeFile(
+      targetPath,
+      Buffer.concat([elf(2, 1, 183), Buffer.from("HelloREA")]),
+    );
     const imported = await importInvestigationTarget(root, targetPath);
     expect(imported.ok).toBe(true);
     if (!imported.ok) throw new Error(imported.error.message);
@@ -38,13 +44,15 @@ describe("investigation project workflow", () => {
     if (!analyzed.ok) throw new Error(analyzed.error.message);
     expect(analyzed.value.job.status).toBe("completed");
     expect(analyzed.value.job.report_paths.markdown).toMatch(/\.md$/u);
-    expect(analyzed.value.job.findings.some((finding) => finding.kind === "string")).toBe(
-      true,
+    expect(
+      analyzed.value.job.findings.some((finding) => finding.kind === "string"),
+    ).toBe(true);
+    expect(analyzed.value.job.limitations.join(" ")).toContain(
+      "never executed",
     );
-    expect(analyzed.value.job.limitations.join(" ")).toContain("never executed");
-    expect(analyzed.value.report?.remaining_workflows.some((item) => item.usable)).toBe(
-      true,
-    );
+    expect(
+      analyzed.value.report?.remaining_workflows.some((item) => item.usable),
+    ).toBe(true);
     expect(analyzed.value.report?.provenance.node_version).toMatch(/^v/u);
     expect(analyzed.value.report?.ai_disclosure?.provider).toBe("none");
     expect(analyzed.value.report?.ai_disclosure?.attempted).toBe(false);
@@ -79,21 +87,29 @@ describe("investigation project workflow", () => {
           finding.provider === "builtin-static",
       ),
     ).toBe(true);
-    const again = await runInvestigationWorkflow(root, imported.value.target.target_id, {
-      environment: {},
-    });
+    const again = await runInvestigationWorkflow(
+      root,
+      imported.value.target.target_id,
+      {
+        environment: {},
+      },
+    );
     expect(again.ok && again.value.reused_job).toBe(true);
-    const regenerated = await runInvestigationWorkflow(root, imported.value.target.target_id, {
-      resumeJobId: analyzed.value.job.job_id,
-      regenerateReport: true,
-      environment: {},
-    });
+    const regenerated = await runInvestigationWorkflow(
+      root,
+      imported.value.target.target_id,
+      {
+        resumeJobId: analyzed.value.job.job_id,
+        regenerateReport: true,
+        environment: {},
+      },
+    );
     expect(regenerated.ok).toBe(true);
     if (!regenerated.ok) throw new Error(regenerated.error.message);
     expect(regenerated.value.job.job_id).toBe(analyzed.value.job.job_id);
-    expect(regenerated.value.job.findings.map((finding) => finding.finding_id)).toEqual(
-      analyzed.value.job.findings.map((finding) => finding.finding_id),
-    );
+    expect(
+      regenerated.value.job.findings.map((finding) => finding.finding_id),
+    ).toEqual(analyzed.value.job.findings.map((finding) => finding.finding_id));
   });
 
   it("inspects a target without executing it and keeps empty files out of import", async () => {
@@ -148,7 +164,9 @@ describe("investigation project workflow", () => {
 
   it("reports angr as unavailable and does not invent a ready AI provider", async () => {
     const backends = await probeAnalysisBackends({});
-    expect(backends.find((backend) => backend.id === "angr")?.available).toBe(false);
+    expect(backends.find((backend) => backend.id === "angr")?.available).toBe(
+      false,
+    );
     const interpreted = await interpretEvidenceWithAi({
       question: "explain",
       evidence: "unused",
@@ -176,14 +194,24 @@ describe("investigation project safety", () => {
     const root = await projectRoot();
     await createInvestigationProject(root, "stale");
     const targetPath = join(root, "sample.so");
-    await writeFile(targetPath, Buffer.concat([elf(2, 1, 183), Buffer.from("HelloREA")]));
+    await writeFile(
+      targetPath,
+      Buffer.concat([elf(2, 1, 183), Buffer.from("HelloREA")]),
+    );
     const imported = await importInvestigationTarget(root, targetPath);
     expect(imported.ok).toBe(true);
     if (!imported.ok) throw new Error(imported.error.message);
-    await writeFile(targetPath, Buffer.concat([elf(2, 1, 183), Buffer.from("Changed")]));
-    const analyzed = await runInvestigationWorkflow(root, imported.value.target.target_id, {
-      environment: {},
-    });
+    await writeFile(
+      targetPath,
+      Buffer.concat([elf(2, 1, 183), Buffer.from("Changed")]),
+    );
+    const analyzed = await runInvestigationWorkflow(
+      root,
+      imported.value.target.target_id,
+      {
+        environment: {},
+      },
+    );
     expect(analyzed.ok).toBe(false);
     if (analyzed.ok) throw new Error("expected stale-hash refusal");
     expect(analyzed.error.userMessage ?? analyzed.error.message).toContain(
@@ -195,28 +223,47 @@ describe("investigation project safety", () => {
     const root = await projectRoot();
     await createInvestigationProject(root, "reuse-stale");
     const targetPath = join(root, "sample.so");
-    await writeFile(targetPath, Buffer.concat([elf(2, 1, 183), Buffer.from("HelloREA")]));
+    await writeFile(
+      targetPath,
+      Buffer.concat([elf(2, 1, 183), Buffer.from("HelloREA")]),
+    );
     const imported = await importInvestigationTarget(root, targetPath);
     expect(imported.ok).toBe(true);
     if (!imported.ok) throw new Error(imported.error.message);
-    const first = await runInvestigationWorkflow(root, imported.value.target.target_id, {
-      environment: {},
-    });
+    const first = await runInvestigationWorkflow(
+      root,
+      imported.value.target.target_id,
+      {
+        environment: {},
+      },
+    );
     expect(first.ok).toBe(true);
-    await writeFile(targetPath, Buffer.concat([elf(2, 1, 183), Buffer.from("Changed")]));
-    const second = await runInvestigationWorkflow(root, imported.value.target.target_id, {
-      environment: {},
-    });
+    await writeFile(
+      targetPath,
+      Buffer.concat([elf(2, 1, 183), Buffer.from("Changed")]),
+    );
+    const second = await runInvestigationWorkflow(
+      root,
+      imported.value.target.target_id,
+      {
+        environment: {},
+      },
+    );
     expect(second.ok).toBe(false);
     if (second.ok) throw new Error("expected stale-hash refusal after reuse");
-    expect(second.error.userMessage ?? second.error.message).toContain("changed after import");
+    expect(second.error.userMessage ?? second.error.message).toContain(
+      "changed after import",
+    );
   });
 
   it("classifies from bytes when the extension disagrees and accepts unicode names", async () => {
     const root = await projectRoot();
     await createInvestigationProject(root, "names");
     const targetPath = join(root, "样本 notes.txt");
-    await writeFile(targetPath, Buffer.concat([elf(2, 1, 183), Buffer.from("HelloREA")]));
+    await writeFile(
+      targetPath,
+      Buffer.concat([elf(2, 1, 183), Buffer.from("HelloREA")]),
+    );
     const imported = await importInvestigationTarget(root, targetPath);
     expect(imported.ok).toBe(true);
     if (!imported.ok) throw new Error(imported.error.message);
@@ -227,7 +274,10 @@ describe("investigation project safety", () => {
   it("refuses a missing target and a path-escaping job id", async () => {
     const root = await projectRoot();
     await createInvestigationProject(root, "safety");
-    const missing = await importInvestigationTarget(root, join(root, "gone.bin"));
+    const missing = await importInvestigationTarget(
+      root,
+      join(root, "gone.bin"),
+    );
     expect(missing.ok).toBe(false);
     const { loadInvestigationJob } = await import("./ProjectStore.js");
     const escaped = await loadInvestigationJob(root, "../project");
@@ -236,6 +286,99 @@ describe("investigation project safety", () => {
     expect(escaped.error.userMessage ?? escaped.error.message).toContain(
       "unsupported characters",
     );
+  });
+});
+
+describe("investigation cache identity", () => {
+  it("does not reuse a completed unknown-format job after FAT classification changes", async () => {
+    const root = await projectRoot();
+    await createInvestigationProject(root, "detector-stale");
+    const targetPath = join(root, "true.bin");
+    await writeFile(targetPath, fat([0x0100000c]));
+    const imported = await importInvestigationTarget(root, targetPath);
+    expect(imported.ok).toBe(true);
+    if (!imported.ok) throw new Error(imported.error.message);
+    expect(imported.value.format.format).toBe("mach-o-universal");
+    const first = await runInvestigationWorkflow(
+      root,
+      imported.value.target.target_id,
+      {
+        environment: {},
+      },
+    );
+    expect(first.ok).toBe(true);
+    if (!first.ok) throw new Error(first.error.message);
+    const stale = {
+      ...first.value.job,
+      cache_key: `${imported.value.target.sha256}|1.0.0|auto|dyn=0|ai=0|`,
+      findings: first.value.job.findings.map((finding) =>
+        finding.finding_id === "ev_format"
+          ? {
+              ...finding,
+              title: "Detected format unknown",
+              details:
+                "Bytes claim an executable header family, but parsing failed: FAT slice identity is outside the bounded prefix",
+            }
+          : finding,
+      ),
+    };
+    const saved = await saveInvestigationJob(root, stale);
+    expect(saved.ok).toBe(true);
+    const second = await runInvestigationWorkflow(
+      root,
+      imported.value.target.target_id,
+      {
+        environment: {},
+      },
+    );
+    expect(second.ok).toBe(true);
+    if (!second.ok) throw new Error(second.error.message);
+    expect(second.value.reused_job).not.toBe(true);
+    expect(second.value.job.job_id).not.toBe(first.value.job.job_id);
+    expect(
+      second.value.job.findings.some(
+        (finding) =>
+          finding.finding_id === "ev_format" &&
+          finding.title === "Detected format mach-o-universal",
+      ),
+    ).toBe(true);
+    expect(second.value.job.cache_key).toContain("fmt=mach-o-universal");
+    expect(second.value.job.cache_key).toContain("det=2");
+  });
+
+  it("does not reuse a completed job when authorize-dynamic changes", async () => {
+    const root = await projectRoot();
+    await createInvestigationProject(root, "options");
+    const targetPath = join(root, "sample.so");
+    await writeFile(
+      targetPath,
+      Buffer.concat([elf(2, 1, 183), Buffer.from("HelloREA")]),
+    );
+    const imported = await importInvestigationTarget(root, targetPath);
+    expect(imported.ok).toBe(true);
+    if (!imported.ok) throw new Error(imported.error.message);
+    const first = await runInvestigationWorkflow(
+      root,
+      imported.value.target.target_id,
+      {
+        environment: {},
+      },
+    );
+    expect(first.ok).toBe(true);
+    const second = await runInvestigationWorkflow(
+      root,
+      imported.value.target.target_id,
+      {
+        environment: {},
+        authorizeDynamic: true,
+      },
+    );
+    expect(second.ok).toBe(true);
+    if (!first.ok || !second.ok)
+      throw new Error("expected both analyses to succeed");
+    expect(second.value.reused_job).not.toBe(true);
+    expect(second.value.job.job_id).not.toBe(first.value.job.job_id);
+    expect(second.value.job.cache_key).toContain("dyn=1");
   });
 
   it("persists an interrupted job when the caller cancels", async () => {
@@ -248,13 +391,19 @@ describe("investigation project safety", () => {
     if (!imported.ok) throw new Error(imported.error.message);
     const controller = new AbortController();
     controller.abort();
-    const analyzed = await runInvestigationWorkflow(root, imported.value.target.target_id, {
-      environment: {},
-      signal: controller.signal,
-    });
+    const analyzed = await runInvestigationWorkflow(
+      root,
+      imported.value.target.target_id,
+      {
+        environment: {},
+        signal: controller.signal,
+      },
+    );
     expect(analyzed.ok).toBe(false);
     const { listInvestigationJobs } = await import("./ProjectStore.js");
     const jobs = await listInvestigationJobs(root);
-    expect(jobs.ok && jobs.value.some((job) => job.status === "interrupted")).toBe(true);
+    expect(
+      jobs.ok && jobs.value.some((job) => job.status === "interrupted"),
+    ).toBe(true);
   });
 });

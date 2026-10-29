@@ -36,7 +36,10 @@ import {
   type InvestigationReport,
 } from "../../domain/investigationReport.js";
 import { aiProviderStatus, interpretEvidenceWithAi } from "./AiProvider.js";
-import { probeAnalysisBackends, type BackendAvailability } from "./BackendProbe.js";
+import {
+  probeAnalysisBackends,
+  type BackendAvailability,
+} from "./BackendProbe.js";
 import {
   addProjectTarget,
   createInvestigationJob,
@@ -57,6 +60,18 @@ import { writeInvestigationReports } from "./ReportWriter.js";
 
 const MAX_PROBE_BYTES = 8 * 1024;
 const MAX_STRING_SCAN_BYTES = 64 * 1024;
+
+/** True when a completed job's recorded format still matches the live detector. */
+const jobFormatAgrees = (
+  job: InvestigationJob,
+  detectedFormat: string,
+): boolean => {
+  const recorded = job.findings.find(
+    (finding) => finding.finding_id === "ev_format",
+  );
+  if (recorded === undefined) return false;
+  return recorded.title === `Detected format ${detectedFormat}`;
+};
 
 const inputError = (operation: string, message: string): AnalysisInputError =>
   new AnalysisInputError(operation, { userMessage: message }, [
@@ -80,7 +95,9 @@ const updateStage = (
           ...(status === "running"
             ? { started_at: extra.started_at ?? new Date().toISOString() }
             : {}),
-          ...(status === "completed" || status === "failed" || status === "skipped"
+          ...(status === "completed" ||
+          status === "failed" ||
+          status === "skipped"
             ? { finished_at: extra.finished_at ?? new Date().toISOString() }
             : {}),
         }
@@ -170,7 +187,10 @@ const collectStaticFindings = async (
   if (!format.supported)
     limitations.push("The detected format is unsupported or empty.");
   if (target.size_bytes > 0 && format.format !== "source-repository") {
-    const prefix = await readLocalFilePrefix(target.path, MAX_STRING_SCAN_BYTES);
+    const prefix = await readLocalFilePrefix(
+      target.path,
+      MAX_STRING_SCAN_BYTES,
+    );
     if (prefix.ok) {
       const strings = extractPrintableStrings(prefix.value);
       if (strings.length > 0) {
@@ -266,7 +286,9 @@ export const runInvestigationWorkflow = async (
 ): Promise<Result<InvestigationWorkflowResult, AnalysisInputError>> => {
   const project = await loadInvestigationProject(projectRoot);
   if (!project.ok) return project;
-  const target = project.value.targets.find((entry) => entry.target_id === targetId);
+  const target = project.value.targets.find(
+    (entry) => entry.target_id === targetId,
+  );
   if (target === undefined)
     return err(inputError("analyze_project", `Unknown target ${targetId}.`));
   const environment = options.environment ?? process.env;
@@ -292,19 +314,35 @@ export const runInvestigationWorkflow = async (
         "Target contents changed after import. Re-import the file to analyze the new bytes.",
       ),
     );
+  const format = await detectTargetFormat(target.path);
+  if (!format.ok)
+    return err(
+      inputError(
+        "analyze_project",
+        format.error.userMessage ?? format.error.message,
+      ),
+    );
   let job: InvestigationJob;
   if (options.resumeJobId === undefined) {
-    const candidate = createInvestigationJob(target, {
-      ...project.value.config,
-      authorize_dynamic:
-        options.authorizeDynamic ?? project.value.config.authorize_dynamic,
-    });
-    const reusable = await findReusableCompletedJob(projectRoot, candidate.cache_key);
+    const candidate = createInvestigationJob(
+      target,
+      {
+        ...project.value.config,
+        authorize_dynamic:
+          options.authorizeDynamic ?? project.value.config.authorize_dynamic,
+      },
+      {},
+      format.value.format,
+    );
+    const reusable = await findReusableCompletedJob(
+      projectRoot,
+      candidate.cache_key,
+    );
     if (!reusable.ok) return reusable;
-    if (reusable.value !== null) {
-      const format = await detectTargetFormat(target.path);
-      if (!format.ok)
-        return err(inputError("analyze_project", format.error.userMessage ?? format.error.message));
+    if (
+      reusable.value !== null &&
+      jobFormatAgrees(reusable.value, format.value.format)
+    ) {
       const backends = await probeAnalysisBackends(environment);
       return ok({
         project: project.value,
@@ -319,13 +357,13 @@ export const runInvestigationWorkflow = async (
     }
     job = candidate;
   } else {
-    const resumed = await loadInvestigationJob(projectRoot, options.resumeJobId);
+    const resumed = await loadInvestigationJob(
+      projectRoot,
+      options.resumeJobId,
+    );
     if (!resumed.ok) return resumed;
     job = resumed.value;
     if (job.status === "completed" && options.regenerateReport !== true) {
-      const format = await detectTargetFormat(target.path);
-      if (!format.ok)
-        return err(inputError("analyze_project", format.error.userMessage ?? format.error.message));
       return ok({
         project: project.value,
         target,
@@ -340,15 +378,22 @@ export const runInvestigationWorkflow = async (
     if (job.status === "cancelled")
       return err(inputError("resume_job", "Cancelled jobs cannot be resumed."));
     if (job.status === "completed" && options.regenerateReport === true) {
-      const format = await detectTargetFormat(target.path);
-      if (!format.ok)
-        return err(inputError("analyze_project", format.error.userMessage ?? format.error.message));
       const backends = await probeAnalysisBackends(environment);
-      return writeCompletedReports(projectRoot, project.value, target, job, format.value, backends);
+      return writeCompletedReports(
+        projectRoot,
+        project.value,
+        target,
+        job,
+        format.value,
+        backends,
+      );
     }
     if (!isResumableJobStatus(job.status))
       return err(
-        inputError("resume_job", `Job ${job.job_id} is ${job.status} and is not resumable.`),
+        inputError(
+          "resume_job",
+          `Job ${job.job_id} is ${job.status} and is not resumable.`,
+        ),
       );
     job = {
       ...job,
@@ -398,8 +443,6 @@ export const runInvestigationWorkflow = async (
   job = updateStage(job, "hash_target", "completed", {
     summary: target.sha256,
   });
-  const format = await detectTargetFormat(target.path);
-  if (!format.ok) return fail("detect_format", format.error.userMessage ?? format.error.message);
   job = updateStage(job, "detect_format", "completed", {
     summary: format.value.format,
   });
@@ -471,7 +514,8 @@ export const runInvestigationWorkflow = async (
     settings: aiStatus.settings,
     bytesOffered: evidenceBytes,
     operatorAuthorized: job.ai_enabled,
-    reason: "AI interpretation is skipped unless a provider is configured and the job enables it.",
+    reason:
+      "AI interpretation is skipped unless a provider is configured and the job enables it.",
   });
   if (job.ai_enabled && aiStatus.ready) {
     aiDisclosure = createAiDisclosure({
@@ -482,19 +526,25 @@ export const runInvestigationWorkflow = async (
       reason:
         "Operator enabled project AI. Evidence JSON is sent to the configured endpoint. The API key is not included in this report.",
     });
-    const interpreted = await interpretEvidenceWithAi({
-      question: "Summarize the observed findings without claiming exploitability.",
-      evidence: JSON.stringify(job.findings),
-      settings: parseAiProviderSettings(environment),
-      fetchImpl: globalThis.fetch,
-    });
+    const interpreted = await interpretEvidenceWithAi(
+      {
+        question:
+          "Summarize the observed findings without claiming exploitability.",
+        evidence: JSON.stringify(job.findings),
+        settings: parseAiProviderSettings(environment),
+        fetchImpl: globalThis.fetch,
+      },
+      environment,
+    );
     if (interpreted.ok) {
       ai = interpreted.value;
       job = updateStage(job, "optional_ai", "completed", {
         summary: `Interpreted by ${ai.provider}`,
       });
     } else {
-      job = updateStage(job, "optional_ai", "failed", { error: interpreted.error });
+      job = updateStage(job, "optional_ai", "failed", {
+        error: interpreted.error,
+      });
       job.limitations.push(interpreted.error);
     }
   } else {
@@ -584,10 +634,14 @@ const persistCompletedInvestigation = async (input: {
     summary: job.job_id,
   });
   const completedReport = { ...report, job };
-  const written = await writeInvestigationReports(input.projectRoot, job.job_id, {
-    json: renderInvestigationReportJson(completedReport),
-    markdown: renderInvestigationReportMarkdown(completedReport),
-  });
+  const written = await writeInvestigationReports(
+    input.projectRoot,
+    job.job_id,
+    {
+      json: renderInvestigationReportJson(completedReport),
+      markdown: renderInvestigationReportMarkdown(completedReport),
+    },
+  );
   if (!written.ok) {
     const failed = {
       ...job,
@@ -596,7 +650,10 @@ const persistCompletedInvestigation = async (input: {
     };
     await saveInvestigationJob(input.projectRoot, failed);
     return err(
-      inputError("generate_report", written.error.userMessage ?? written.error.message),
+      inputError(
+        "generate_report",
+        written.error.userMessage ?? written.error.message,
+      ),
     );
   }
   const persisted = await saveInvestigationJob(input.projectRoot, job);
@@ -635,7 +692,8 @@ const writeCompletedReports = async (
       settings: aiStatus.settings,
       bytesOffered: 0,
       operatorAuthorized: false,
-      reason: "Report regenerated from stored findings. No new AI request was sent.",
+      reason:
+        "Report regenerated from stored findings. No new AI request was sent.",
     }),
   });
 };

@@ -9,6 +9,13 @@ export const INVESTIGATION_PROJECT_VERSION = 1;
 /** Workflow implementation version included in cache keys and job receipts. */
 export const INVESTIGATION_WORKFLOW_VERSION = "1.0.0";
 
+/**
+ * Format-detector algorithm version. Bump when `detectRegisteredFormat`
+ * changes result-affecting classification so older completed jobs cannot
+ * be reused against a new detector.
+ */
+export const INVESTIGATION_DETECTOR_VERSION = "2";
+
 export const INVESTIGATION_JOB_STATUSES = [
   "queued",
   "running",
@@ -18,7 +25,8 @@ export const INVESTIGATION_JOB_STATUSES = [
   "cancelled",
 ] as const;
 
-export type InvestigationJobStatus = (typeof INVESTIGATION_JOB_STATUSES)[number];
+export type InvestigationJobStatus =
+  (typeof INVESTIGATION_JOB_STATUSES)[number];
 
 export const INVESTIGATION_STAGE_IDS = [
   "validate_input",
@@ -92,7 +100,10 @@ export const investigationFindingSchema = z.object({
   details: z.string().min(1),
   verified: z.boolean(),
   target_id: z.string().min(1).optional(),
-  target_sha256: z.string().regex(/^[0-9a-f]{64}$/u).optional(),
+  target_sha256: z
+    .string()
+    .regex(/^[0-9a-f]{64}$/u)
+    .optional(),
   provider: z.string().min(1).optional(),
 });
 
@@ -178,9 +189,7 @@ export const parseInvestigationProject = (
 };
 
 /** True when resume-job may re-run analysis for this status. */
-export const isResumableJobStatus = (
-  status: InvestigationJobStatus,
-): boolean =>
+export const isResumableJobStatus = (status: InvestigationJobStatus): boolean =>
   status === "failed" ||
   status === "interrupted" ||
   status === "queued" ||
@@ -211,6 +220,8 @@ export const isTerminalJobStatus = (status: InvestigationJobStatus): boolean =>
 export const investigationCacheKey = (input: {
   readonly targetSha256: string;
   readonly workflowVersion: string;
+  readonly detectorVersion: string;
+  readonly detectedFormat: string;
   readonly backends: readonly string[];
   readonly authorizeDynamic: boolean;
   readonly aiEnabled: boolean;
@@ -223,6 +234,8 @@ export const investigationCacheKey = (input: {
   return [
     input.targetSha256,
     input.workflowVersion,
+    `det=${input.detectorVersion}`,
+    `fmt=${input.detectedFormat}`,
     [...input.backends].sort().join(","),
     input.authorizeDynamic ? "dyn=1" : "dyn=0",
     input.aiEnabled ? "ai=1" : "ai=0",

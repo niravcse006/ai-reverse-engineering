@@ -11,7 +11,9 @@ import {
 describe("investigation project model", () => {
   it("creates one pending stage for every workflow step", () => {
     const stages = createPendingStages();
-    expect(stages.map((stage) => stage.id)).toEqual([...INVESTIGATION_STAGE_IDS]);
+    expect(stages.map((stage) => stage.id)).toEqual([
+      ...INVESTIGATION_STAGE_IDS,
+    ]);
     expect(stages.every((stage) => stage.status === "pending")).toBe(true);
   });
 
@@ -19,6 +21,8 @@ describe("investigation project model", () => {
     const base = {
       targetSha256: "a".repeat(64),
       workflowVersion: "1.0.0",
+      detectorVersion: "2",
+      detectedFormat: "elf",
       backends: ["auto"],
       authorizeDynamic: false,
       aiEnabled: false,
@@ -32,13 +36,24 @@ describe("investigation project model", () => {
         backendVersions: { ghidra: "12.1.4" },
       }),
     );
+    expect(investigationCacheKey(base)).not.toBe(
+      investigationCacheKey({ ...base, detectedFormat: "unknown" }),
+    );
+    expect(investigationCacheKey(base)).not.toBe(
+      investigationCacheKey({ ...base, detectorVersion: "1" }),
+    );
+    expect(investigationCacheKey(base)).not.toBe(
+      investigationCacheKey({ ...base, authorizeDynamic: true }),
+    );
   });
 
   it("rejects a malformed project document", () => {
     const unsupported = parseInvestigationProject({ version: 2 });
     expect(unsupported.ok).toBe(false);
     if (!unsupported.ok)
-      expect(unsupported.error).toContain("Unsupported project schema version 2");
+      expect(unsupported.error).toContain(
+        "Unsupported project schema version 2",
+      );
     expect(
       parseInvestigationProject({
         version: INVESTIGATION_PROJECT_VERSION,

@@ -3,7 +3,7 @@
 Date: 2026-10-29.
 Workspace: `/Users/niravsoni/Projects/rea`.
 Repository: https://github.com/niravcse006/ai-reverse-engineering
-HEAD at start of this increment: `b4294d0` (matched `origin/main`, clean tree).
+HEAD at start of this increment: `4c06200` (matched `origin/main`, clean tree).
 
 This is the authoritative current-state summary. Historical reports:
 [FINAL_IMPLEMENTATION_REPORT.md](FINAL_IMPLEMENTATION_REPORT.md),
@@ -17,182 +17,109 @@ ran**. It does not claim complete upstream parity or production readiness.
 
 ## 1. Baseline
 
-| Item | Value |
-| --- | --- |
-| Local / GitHub `main` at start | `b4294d0` |
-| Compatible upstream release | rea-agents **6.8.0** `160d821ac9a0310afcb8d1fc427862dd6508add5` |
-| Imported snapshot | `17ceb77ca5f2632faab8de01da4babff680eac48` |
-| Upstream `main` recorded | `1ef5918179d3cb77b8868bd117de662cbd7099ab` (`npm run upstream:drift`, ahead 12) |
-| Node used | v22.23.4 (`.nvmrc` 24.22.1 not installed) |
-| Identity | `rea-agents`, `io.github.morluto/rea`, bins `rea` / `rea-agents` — **not renamed** |
+| Item                           | Value                                                                  |
+| ------------------------------ | ---------------------------------------------------------------------- |
+| Local / GitHub `main` at start | `4c06200`                                                              |
+| Compatible upstream release    | rea-agents **6.8.0** `160d821ac9a0310afcb8d1fc427862dd6508add5`        |
+| Imported snapshot              | `17ceb77ca5f2632faab8de01da4babff680eac48`                             |
+| Upstream `main` last recorded  | `1ef5918179d3cb77b8868bd117de662cbd7099ab` (ahead 12)                  |
+| Node used                      | v22.23.4 (`.nvmrc` 24.22.1 not installed)                              |
+| Identity                       | `rea-agents`, `io.github.morluto/rea` — **not renamed, not published** |
 
-Custom layer: `src/domain/investigationProject.ts`, `investigationReport.ts`,
-`aiProviderContract.ts`, `formatRegistry.ts` (investigation registry),
-`src/application/investigationProject/*`, `src/cli/investigationProjectCommands.ts`.
-Everything else is the REA 6.8.0 snapshot plus local ports (ADB PNG, bookmark
-uncertainty, dispatch format refusals).
+## 2. Defects fixed this increment
 
-## 2. Verified and passing
+| Defect                                                                                                     | Files                                                       | Tests                                                                   |
+| ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Completed jobs reused after detector/format change (`unknown` vs `mach-o-universal`)                       | `investigationProject.ts`, `ProjectStore.ts`, `Workflow.ts` | `investigationProject.test.ts`, `Workflow.test.ts` cache-identity cases |
+| `analyze-project` AI used `process.env` for the API key after `aiProviderStatus` read a caller environment | `Workflow.ts`                                               | `AiProvider.test.ts` local HTTP + failure path                          |
+| FAT prefix already classified as `mach-o-universal` (prior increment)                                      | `formatRegistry.ts`                                         | still passing                                                           |
 
-- Native bookmark uncertainty + investigation remaining-workflow source tests:
-  **4 files, 48 passed** (`Workflow`, `RemainingWorkflows`,
-  `AnalysisContextQueries`, `AppleDispatchMetadata.failure`).
-- Format-registry FAT prefix + remaining-workflow tests: **3 files, 23 passed**.
-- Focused compiled tests: `addressContextBookmarks` + `nativeDispatchFormatFailures`
-  **14 passed**.
-- `npm run check:fast`: typecheck + lint **passed** (run after the FAT change).
-- `npm audit --omit=dev`: **0** production vulnerabilities, exit 0.
-- Real provider: `rea inspect-macho /usr/bin/true` exit 0 (`native-macos`,
-  `mach-o-universal`, selected `arm64e`, evidence id returned).
-- CLI investigation: init → import `/usr/bin/true` → analyze-project completed
-  with `ev_format` (derived), `ev_strings` (observed), `ev_next_commands`
-  (inferred: `inspect-macho`, `inspect-native-exports`, `inspect-with-objdump`).
-- Schema version 2 refused with an actionable message (prior increment).
-- Stale target bytes after import refused (prior increment).
-- Evidence files written under `evidence/*.json` with finding provenance.
-- Reports list remaining existing CLI commands; ELF analyze writes inferred
-  `ev_next_commands` naming `inspect-elf-notes` without launching it.
-- `analyze-project` does not execute the target or launch Frida.
+Cache identity now includes `det=<INVESTIGATION_DETECTOR_VERSION>` and
+`fmt=<detected format>`. Older keys such as
+`sha256\|1.0.0\|auto\|dyn=0\|ai=0\|` do not match. Reuse also requires the
+stored `ev_format` title to match the live detector. Unchanged inputs still
+reuse. Existing projects invalidate safely by key mismatch.
 
-## 3. Fixed and regression-tested this increment
+## 3. MCP classification (Priority 1)
 
-| Change | Tests |
-| --- | --- |
-| Bookmark address comparison keeps unmatched/unparseable identities unavailable | `AnalysisContextQueries.test.ts` |
-| Misaligned ObjC/Swift sections and unsupported big-endian CPU become `BinaryFormatFailure` → `AnalysisUnsupportedTargetError` | `AppleDispatchMetadata.failure.test.ts`; added `nativeDispatchFormatFailures.test.ts` |
-| Remaining workflows name existing inspectors (`inspect-elf-notes`, `inspect-macho`, `inspect-with-objdump`, …) | `RemainingWorkflows.test.ts` |
-| Analyze persists inferred next `rea …` commands as `ev_next_commands` | `Workflow.test.ts` |
-| FAT slices outside the 8 KiB probe classify as `mach-o-universal` and name `inspect-macho` | `formatRegistry.test.ts`; CLI import of `/usr/bin/true` |
-| Investigation evidence files (prior increment, still passing) | `Workflow.test.ts` |
+Sandboxed `npm run test:mcp` from the previous increment: exit **1**,
+**41 failed / 205 passed / 3 skipped** files, **139 failed / 1470 passed /
+14 skipped** tests. Diagnostics included `spawn EPERM` and Rizin
+`posix_spawnp`.
 
-## 4. Partially implemented
+This increment re-ran **8 files / 72 tests** with `npm run test:focused`
+**outside the agent sandbox**. Exit **0**. All 72 passed, including files
+that failed in the sandbox:
 
-- Optional `REA_AI_*`: unit refusals only; no live HTTP.
-- ADB PNG helper tests passed earlier; provider test not re-run.
-- CLI investigation commands exist; they are **not** MCP tools.
-- Builtin-static `analyze-project`; deep engines remain separate commands.
-- Native bookmark/dispatch ports are source-tested. Focused MCP/provider
-  files were added but not completed in a green `test:mcp` run.
+| File                                     | Prior sandboxed result     | Unsandboxed result | Category              |
+| ---------------------------------------- | -------------------------- | ------------------ | --------------------- |
+| `pcapWorkspaceAllocation.test.ts`        | 10 failed                  | 10 passed          | Environment / sandbox |
+| `sourceToBundleViewsMcp.test.ts`         | 2 failed                   | 2 passed           | Environment / sandbox |
+| `nativeMachoSummaryMcp.test.ts`          | 3 failed                   | 4 passed           | Environment / sandbox |
+| `rizinPendingOutput.test.ts`             | 21 failed (`posix_spawnp`) | 21 passed          | Environment / sandbox |
+| `applicationMutationPresenceMcp.test.ts` | 14 failed                  | 14 passed          | Environment / sandbox |
+| `analyzeFunctionDetail.test.ts`          | 1 failed                   | 9 passed           | Environment / sandbox |
+| `decompileAllCaveats.test.ts`            | 5 failed                   | 5 passed           | Environment / sandbox |
+| `addressContextBookmarks.test.ts`        | 7 passed                   | 7 passed           | Confirmed pass        |
 
-## 5. Tested and not green
+**Confirmed product defects from the MCP suite:** none in the retested set.
+**Test defects:** none confirmed.
+**Environment / sandbox:** the 7 previously failing files above.
+**Missing dependency / platform:** not established for the retested set.
+**Undetermined:** the other previously failing files (Frida, Electron, browser,
+Ghidra reopen, Rizin output preservation, deferred runtime, snapshot replay,
+and others) were **not** re-run this increment.
 
-`npm run test:mcp` completed on this checkout. Exit **1**.
-`vitest --project mcp-boundary`: **41 failed / 205 passed / 3 skipped** files
-(249); **139 failed / 1470 passed / 14 skipped** tests (1623); 1876.50s.
-`addressContextBookmarks.test.ts` **7 passed**. Observed failing files include:
+Full `npm run test:mcp` was **not** re-run unsandboxed here. Do not treat the
+sandboxed 139 failures as product defects, and do not treat the full suite as
+passing.
 
-- `fridaLifecycleMcp.test.ts` (2)
-- `electronMcp.test.ts` (4)
-- `browserMcp.test.ts` (4)
-- `deferredRuntime.test.ts` (2)
-- `workflowSnapshotReplayMcp.test.ts` (1)
-- `rizinPendingOutput.test.ts` (21)
-- `nativeMachoSummaryMcp.test.ts` (3)
-- `javascriptFactsViewMcp.test.ts` (1)
-- `javascriptAnalysisResources.test.ts` (1)
-- `ghidraReopen.test.ts` (3)
-- `sourceToBundleViewsMcp.test.ts` (2)
-- `analyzeFunctionDetail.test.ts` (1)
-- `applicationMutationPresenceMcp.test.ts` (14)
-- `decompileAllCaveats.test.ts` (5)
-- `pcapWorkspaceAllocation.test.ts` (10)
-- `rizinOutputPreservation.test.ts` (17)
-- `androidLateCompletionMcp.test.ts` (1)
+## 4. Upstream ports (Priority 3)
 
-These failures were **not** hidden or weakened. Repeated diagnostics include
-`process table could not be inspected: spawn EPERM` (agent sandbox) and
-`posix_spawnp failed` in the Rizin PTY helper. They are not claimed as
-investigation-layer regressions. See [testing.md](testing.md).
+No additional `main` commits were ported this increment. Still **MISSING**:
+guidance `c88e1b0`, environment writes `131fbe0` / `51ad845`, BinarySession
+cancel `3503578`, Mach-O encryption `860fdd8`, Linux process-ownership
+`01e00da`, browser source-map `1ef5918`. Those remain the next reviewable
+ports.
 
-A parallel CLI smoke after `pretest:mcp` failed with
-`Cannot find module '…/dist/cli-runtime/cliResultOutput.js'` because compile
-cleaned `dist/` mid-run.
+## 5. AI outbound verification (Priority 4)
 
-## 6. Not tested this increment
+Controlled **127.0.0.1** HTTP server + injected `fetch`. No external provider
+and no confidential binaries.
 
-- `npm test`, `npm run check:pr`, `npm run docs:check`, `npm run verify:package`
-- Real Ghidra / Hopper / IDA / Kuna / JADX / Frida / browser / ADB device
-- Live AI HTTP
-- Clean-install from a packed tarball
+| Check                     | Result                                                                                           |
+| ------------------------- | ------------------------------------------------------------------------------------------------ |
+| Provider `none`           | No HTTP                                                                                          |
+| Enabled openai-compatible | POST findings JSON + untrusted wrapper; `Authorization: Bearer` header; key **absent** from body |
+| AI endpoint failure       | Job stays **completed**; `optional_ai` failed; findings preserved                                |
+| Disable                   | Leave `REA_AI_PROVIDER` unset/`none`, or `REA_AI_SPENDING_LIMIT_USD=0`                           |
 
-## 7. Blocked / owner decision
+## 6. Commands run this increment
 
-- Independent npm/MCP rename: `rea-agents` is taken. **No rename and no
-  publish** until the owner chooses personal-fork vs compatible names vs
-  independent product.
-- Seven remaining `main` functional commits (guidance, environment writes,
-  BinarySession cancel, Mach-O encryption, Linux process ownership,
-  environment sorted writes, browser source-map) were not ported. They are
-  large or need their own merge review.
-- Live AI needs an endpoint and key the owner controls.
+| Command                                                              | Exit                                          |
+| -------------------------------------------------------------------- | --------------------------------------------- |
+| `npm run test:local --` investigationProject + Workflow + AiProvider | 0 (19 tests)                                  |
+| `npm run test:focused --` 8 MCP files listed above                   | 0 (72 tests)                                  |
+| `npm run check:fast`                                                 | 0 after splitting the cache-identity describe |
+| `npm audit --omit=dev`                                               | 0 (0 production vulnerabilities)              |
+| `npm run docs:check`                                                 | 0                                             |
+| `npm run verify:package`                                             | 0 (unsandboxed; sandbox `spawn EPERM` first)  |
+| `npm test` / `check:pr` / full `test:mcp`                            | **not run**                                   |
 
-## 8. Deliberately excluded
+## 7. Remaining work
 
-- Copying all of upstream `main` over this tree.
-- Launching the target or Frida from `analyze-project`.
-- Loading third-party plugin JavaScript.
-- Claiming this fork is better than `morluto/rea`.
-- Publishing the package.
+- Unsandboxed full `npm run test:mcp`.
+- Incremental ports of the six `main` commits above, starting with
+  BinarySession cancellation and Linux process-ownership.
+- `npm test` and `check:pr`.
+- Owner decision before any package rename or publish.
 
-## 9. Remaining security risks
+## 8. Conclusion
 
-See [SECURITY_AUDIT.md](SECURITY_AUDIT.md) S7–S10 and S14. Highest practical
-risks: optional AI exfiltrates findings when enabled; publishing as
-`rea-agents`; unported session-cancellation / process-ownership vs `main`.
+Cache invalidation and AI environment pass-through are fixed and tested. MCP
+failures that were retested unsandboxed passed and are classified as sandbox
+limitations. Upstream feature completeness is **not** achieved. The project is
+**not** production-ready.
 
-## 10. Runtime commands (this increment)
-
-| Command | Exit |
-| --- | --- |
-| `npm run test:local --` (4 files listed above) | 0 (48 tests) |
-| `npm run test:local --` formatRegistry + RemainingWorkflows + Workflow | 0 (23 tests) |
-| `npm run test:focused --` bookmark + dispatch files | 0 (14 tests) |
-| `npm run check:fast` | 0 |
-| `npm audit --omit=dev` | 0 |
-| `npm run test:mcp` | 1 (41 files failed / 205 passed) |
-| `npm run build:cached` | 0 |
-| CLI investigation smoke (fresh project, `/usr/bin/true`) | 0; format `mach-o-universal` |
-| `rea inspect-macho /usr/bin/true` | 0 |
-| `npm pack --dry-run` | 0; listed `rea-agents-6.8.0.tgz` |
-| `npm test` / `check:pr` / `verify:package` / `docs:check` | **not run** |
-
-## 11. Files changed (this increment)
-
-Production:
-
-- `src/application/AnalysisContextQueries.ts`
-- `src/application/investigationProject/Workflow.ts`
-- `src/application/investigationProject/ProjectStore.ts`
-- `src/application/investigationProject/RemainingWorkflows.ts`
-- `src/domain/formatRegistry.ts`
-- `src/native/AppleDispatchMetadata.ts`
-- `src/native/AppleMachoSelection.ts`
-- `src/native/AppleObjcCategories.ts`
-- `src/native/AppleObjcDispatchFacets.ts`
-- `src/native/AppleSwiftDispatchFacets.ts`
-
-Tests:
-
-- `src/application/AnalysisContextQueries.test.ts`
-- `src/application/investigationProject/Workflow.test.ts`
-- `src/application/investigationProject/RemainingWorkflows.test.ts`
-- `src/domain/formatRegistry.test.ts`
-- `src/native/AppleDispatchMetadata.failure.test.ts`
-- `tests/boundary/mcp/addressContextBookmarks.test.ts` (added)
-- `tests/boundary/providers/native/nativeDispatchFormatFailures.test.ts` (added)
-
-Docs:
-
-- `docs/UPSTREAM_PARITY.md`, `docs/SECURITY_AUDIT.md`, `docs/FINAL_AUDIT.md`,
-  `docs/testing.md`
-- Historical banners on comparison/assessment reports
-
-## 12. Conclusion
-
-The investigation lifecycle now persists evidence, refuses stale hashes, and
-names existing analysis commands without launching them. Two small native
-ports from upstream `main` are source-tested. Upstream feature completeness
-is **not** achieved. `test:mcp` is **not** green. The project is **not**
-production-ready for an independent npm release.
-
-Release recommendation: **development / local testing only**.
+Release recommendation: **local development**. Broader testing needs an
+unsandboxed full MCP run. Not for production release.

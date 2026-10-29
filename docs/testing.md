@@ -43,19 +43,20 @@ not merge them.
 Authoritative summary: [FINAL_AUDIT.md](FINAL_AUDIT.md). Commands actually run
 in this increment, with Node v22.23.4 (`.nvmrc` 24.22.1 is not installed):
 
-| Command | Exit | Result |
-| --- | --- | --- |
-| `npm run test:local --` Workflow, RemainingWorkflows, AnalysisContextQueries, AppleDispatchMetadata.failure | 0 | 4 files, 48 passed |
-| `npm run check:fast` | 0 | typecheck + lint |
-| `npm audit --omit=dev` | 0 | 0 production vulnerabilities |
-| `npm run test:mcp` | 1 | **41 failed / 205 passed / 3 skipped** files; **139 failed / 1470 passed / 14 skipped** tests (1623). Duration 1876.50s. Many failures cite `spawn EPERM` (process-table inspect in the agent sandbox) or `posix_spawnp` (Rizin PTY). Do not treat as passing. |
-| `npm run test:focused --` addressContextBookmarks + nativeDispatchFormatFailures | 0 | 2 files, 14 passed |
-| `rea inspect-macho /usr/bin/true` | 0 | Real `native-macos` provider; `mach-o-universal`, selected arm64e |
-| `npm test` | not run | Full source + compiled suite not completed |
-| `npm run check:pr` | not run | Complete local gate not completed |
-| `npm run verify:package` | not run | `npm pack --dry-run` listed `rea-agents-6.8.0.tgz`; full tarball install not completed |
-| `npm run docs:check` | not run | Generated-doc validation not completed |
-| Live Ghidra / Hopper / IDA / JADX / Frida / AI HTTP | not run | Tools or credentials unavailable or not invoked |
+| Command                                                                                                     | Exit    | Result                                                                                                                   |
+| ----------------------------------------------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `npm run test:local --` Workflow, RemainingWorkflows, AnalysisContextQueries, AppleDispatchMetadata.failure | 0       | 4 files, 48 passed                                                                                                       |
+| `npm run check:fast`                                                                                        | 0       | typecheck + lint                                                                                                         |
+| `npm audit --omit=dev`                                                                                      | 0       | 0 production vulnerabilities                                                                                             |
+| `npm run test:mcp` (sandboxed, prior increment)                                                             | 1       | **41 failed / 205 passed / 3 skipped** files; **139 failed / 1470 passed / 14 skipped** tests. Do not treat as passing.  |
+| `npm run test:focused --` 8 MCP files unsandboxed                                                           | 0       | **72 passed**, including files that failed under `spawn EPERM` / `posix_spawnp`. Full unsandboxed `test:mcp` not re-run. |
+| `npm run test:focused --` addressContextBookmarks + nativeDispatchFormatFailures                            | 0       | 2 files, 14 passed                                                                                                       |
+| `rea inspect-macho /usr/bin/true`                                                                           | 0       | Real `native-macos` provider; `mach-o-universal`, selected arm64e                                                        |
+| `npm test`                                                                                                  | not run | Full source + compiled suite not completed                                                                               |
+| `npm run check:pr`                                                                                          | not run | Complete local gate not completed                                                                                        |
+| `npm run verify:package`                                                                                    | not run | `npm pack --dry-run` listed `rea-agents-6.8.0.tgz`; full tarball install not completed                                   |
+| `npm run docs:check`                                                                                        | not run | Generated-doc validation not completed                                                                                   |
+| Live Ghidra / Hopper / IDA / JADX / Frida / AI HTTP                                                         | not run | Tools or credentials unavailable or not invoked                                                                          |
 
 Reproduction for the investigation + native ports:
 
