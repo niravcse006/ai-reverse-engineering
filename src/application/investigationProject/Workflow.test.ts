@@ -139,7 +139,9 @@ describe("investigation project workflow", () => {
     const reloaded = await importInvestigationTarget(root, targetPath);
     expect(reloaded.ok).toBe(false);
   });
+});
 
+describe("investigation project refusals", () => {
   it("refuses a zero spend limit before sending evidence", async () => {
     const interpreted = await interpretEvidenceWithAi({
       question: "explain",
