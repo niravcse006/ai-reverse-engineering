@@ -15,7 +15,7 @@ Inspect software you own or are authorized to examine. Work from the terminal or
 
 `reverse engineering` · `binary analysis` · `decompiler` · `Ghidra` · `IDA` · `Hopper` · `MCP` · `static analysis` · `malware research`
 
-[Quick start](#quick-start) · [Investigation projects](#investigation-projects) · [What you can analyze](#what-you-can-analyze) · [Architecture](#architecture) · [Documentation](#documentation)
+[Quick start](#quick-start) · [Investigation projects](#investigation-projects) · [What you can analyze](#what-you-can-analyze) · [Architecture](#architecture) · [Verification](#verification) · [Documentation](#documentation)
 
 </div>
 
@@ -153,8 +153,19 @@ Domain code does not launch engines or call the network. Missing optional backen
 | angr symbolic execution | Not integrated |
 | Third-party plugin code loading | Unsupported; metadata validation only |
 
+## Verification
+
+This repository is a working copy of REA 6.8.0 plus a local investigation-project
+layer. It is **not** claimed to be better than [morluto/rea](https://github.com/morluto/rea).
+On 2026-10-29 upstream `main` was 8 commits ahead of the imported snapshot.
+
+The scorecard is [docs/VERIFICATION_CHECKLIST.md](docs/VERIFICATION_CHECKLIST.md).
+P0 work is parity, multi-engine interfaces, evidence-linked conclusions, and
+local-first AI disclosure. New engines or a longer feature list are not next.
+
 ## Documentation
 
+- [Verification checklist](docs/VERIFICATION_CHECKLIST.md)
 - [Installation and agent setup](docs/installation.md)
 - [CLI](docs/cli.md) and [investigation CLI](docs/CLI_REFERENCE.md)
 - [MCP contracts](docs/mcp-contracts.md) and [tool catalog](docs/mcp-contracts.md#generated-catalog)

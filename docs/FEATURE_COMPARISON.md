@@ -4,6 +4,11 @@ Comparison of original REA 6.8.0, this working copy, and selected external
 projects. Ratings use demonstrated value in this repository, not marketing
 pages.
 
+This working copy is **not** declared better than
+[morluto/rea](https://github.com/morluto/rea). On 2026-10-29 upstream `main`
+(`d3ecf68`) was 8 commits ahead of the imported snapshot `17ceb77`. Use
+[VERIFICATION_CHECKLIST.md](VERIFICATION_CHECKLIST.md) as the scorecard.
+
 Legend: **Y** implemented here or in upstream REA, **O** optional backend,
 **P** planned/deferred, **N** absent or rejected.
 

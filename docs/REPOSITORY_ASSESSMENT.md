@@ -129,4 +129,7 @@ A representative existing domain test file, `src/domain/binaryTarget.test.ts`, w
 
 ## Recommended next improvements
 
-See [roadmap.md](roadmap.md). Highest remaining P0 work is regenerating catalogs after a full compile and running the upstream test suite on Node 22+.
+See [VERIFICATION_CHECKLIST.md](VERIFICATION_CHECKLIST.md). Highest remaining
+P0 work is importing the 8 upstream commits after snapshot `17ceb77`, then
+regenerating catalogs and running the upstream test suite on Node 22+. Do not
+declare this fork superior until that comparison and those tests exist.
