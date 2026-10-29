@@ -253,6 +253,43 @@ it.each([
   ["mutable", readEvidenceBundle],
   ["immutable", readImmutableEvidenceBundle],
 ] as const)(
+  "preserves cancellation when a %s read exceeds the native JSON parse budget",
+  async (_, read) => {
+    const root = await createTestTempDirectory("rea-bundle-large-cancel-");
+    const path = join(root, "bundle.json");
+    const contents = " ".repeat(8 * 1024 * 1024) + JSON.stringify(bundle());
+    await writeFile(path, contents);
+    const reader = await holdFirstFileRead(path);
+    const controller = new AbortController();
+    const reason = new Error("stop oversized bundle import");
+    try {
+      const pending = read(path, controller.signal);
+      await reader.firstRead;
+      controller.abort(reason);
+      reader.release();
+      const result = await pending;
+      expect(result).toMatchObject({
+        ok: false,
+        error: {
+          _tag: "AnalysisCancelledError",
+          operation: "import_evidence_bundle",
+        },
+      });
+      if (result.ok)
+        throw new Error("Expected cancelled oversized bundle read");
+      expect(result.error.cause).toBe(reason);
+    } finally {
+      controller.abort(reason);
+      reader.release();
+      vi.restoreAllMocks();
+    }
+  },
+);
+
+it.each([
+  ["mutable", readEvidenceBundle],
+  ["immutable", readImmutableEvidenceBundle],
+] as const)(
   "preserves the caller cancellation reason during %s read",
   async (_, read) => {
     const root = await createTestTempDirectory("rea-bundle-read-cancel-");

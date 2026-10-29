@@ -209,8 +209,11 @@ const jsonFileReadFailure = (
   signal?: AbortSignal,
 ): JsonFileReadFailure => {
   if (cause instanceof AnalysisResourceConstraintError) return cause;
-  if (cause instanceof JsonInputCancellationFailure)
-    return new AnalysisCancelledError(operation, { cause: cause.reason });
+  const cancellation = jsonReadCancellationCause(cause);
+  if (cancellation !== undefined)
+    return new AnalysisCancelledError(operation, {
+      cause: cancellation.reason,
+    });
   if (cause instanceof JsonInputPhysicalReadFailure)
     return new EvidenceFileError("read", "io", {
       cause: cause.physicalCause,
@@ -275,12 +278,29 @@ const jsonFileCleanupError = <Value>(
   }).bindCleanupDependencies([primary, cleanup]);
 };
 
+/** Node may wrap the owned JSON-input abort in an AbortError. */
+const jsonReadCancellationCause = (
+  cause: unknown,
+): JsonInputCancellationFailure | undefined => {
+  if (cause instanceof JsonInputCancellationFailure) return cause;
+  if (
+    cause instanceof Error &&
+    cause.name === "AbortError" &&
+    "code" in cause &&
+    cause.code === "ABORT_ERR" &&
+    cause.cause instanceof JsonInputCancellationFailure
+  )
+    return cause.cause;
+  return undefined;
+};
+
 const isJsonReadCancellation = (
   cause: unknown,
   signal?: AbortSignal,
 ): boolean => {
   if (signal?.aborted !== true) return false;
   if (cause === signal.reason) return true;
+  if (jsonReadCancellationCause(cause) !== undefined) return true;
   return (
     cause instanceof Error &&
     cause.name === "AbortError" &&

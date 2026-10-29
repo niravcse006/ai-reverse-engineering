@@ -9,8 +9,10 @@ import type { JsonValue } from "../../../src/domain/jsonValue.js";
 import type { RecordUnknownInput } from "../../../src/domain/residualUnknown.js";
 import { createAnalysisProfile } from "../../../src/domain/analysisProfile.js";
 import { HopperStartError } from "../../../src/domain/hopperErrors.js";
+import { AnalysisCancelledError } from "../../../src/domain/analysisErrorCore.js";
 import { ProviderAdapterError } from "../../../src/domain/providerAdapterError.js";
 import { ProviderCleanupError } from "../../../src/domain/providerCleanupError.js";
+import { awaitAcknowledgement } from "../../fixtures/lifecycleAcknowledgement.js";
 import { AnalysisCleanupLease } from "../../../src/artifacts/AnalysisCleanupLease.js";
 import { err, ok as resultOk } from "../../../src/domain/result.js";
 import { createEvidenceBundle } from "../../../src/domain/evidenceBundle.js";
@@ -172,6 +174,63 @@ describe("detached provider and target metadata", () => {
       provider_operation_health: null,
     });
   });
+});
+
+it("preserves the exact abort reason after a completed mutation with no active target", async () => {
+  const session = createTestBinarySession(() => {
+    throw new Error(
+      "Completed mutation without a target must not start a provider",
+    );
+  });
+  const reason = { request: "cancel after completed mutation" };
+  const controller = new AbortController();
+  const operation = vi.fn(async () => {
+    controller.abort(reason);
+    return resultOk("observed");
+  });
+  const result = await session.withAdmittedExternalMutation(
+    undefined,
+    controller.signal,
+    operation,
+    (_value, error) => error,
+  );
+  if (result.ok) throw new Error("Expected external mutation cancellation");
+  expect(result.error).toBeInstanceOf(AnalysisCancelledError);
+  expect(result.error.cause).toBe(reason);
+  expect(operation).toHaveBeenCalledOnce();
+  await session.close();
+});
+
+it("preserves the exact abort reason during mutation retirement", async () => {
+  const [target] = await createBinarySessionTargets();
+  const entered = createDeferred<void>();
+  const released = createDeferred<void>();
+  const session = createTestBinarySession(() => ({
+    execute: async () => ok({ operation: "health", value: null }),
+    close: async () => {
+      entered.resolve();
+      await released.promise;
+      return resultOk(null);
+    },
+  }));
+  expect((await session.open(target)).ok).toBe(true);
+  const controller = new AbortController();
+  const reason = { stage: "retirement" };
+  const pending = session.withAdmittedExternalMutation(
+    undefined,
+    controller.signal,
+    async () => resultOk("observed"),
+    (_value, error) => error,
+  );
+  await awaitAcknowledgement(entered.promise, pending, "session retirement");
+  controller.abort(reason);
+  released.resolve();
+  const result = await pending;
+  if (result.ok) throw new Error("Expected external mutation cancellation");
+  expect(result.error).toBeInstanceOf(AnalysisCancelledError);
+  expect(result.error.cause).toBe(reason);
+  expect(session.activeTarget()).toBeUndefined();
+  await session.close();
 });
 
 it("preserves the exact abort reason before external mutation admission", async () => {

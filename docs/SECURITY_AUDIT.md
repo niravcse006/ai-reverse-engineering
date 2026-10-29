@@ -1,10 +1,11 @@
 # Security audit
 
 Date: 2026-10-29.
-Scope: investigation-project layer, native dispatch/bookmark ports, AI
-opt-in, MCP transport defaults observed during `npm run test:mcp`, and
-filesystem/subprocess boundaries those paths touch. This is not a
-penetration test and is not a security certification.
+Scope: investigation-project layer, native dispatch/bookmark ports, BinarySession
+cancellation, Linux process-ownership corroboration, browser source-map
+uncertainty, AI opt-in, MCP transport defaults observed during unsandboxed
+`npm run test:mcp`, and filesystem/subprocess boundaries those paths touch.
+This is not a penetration test and is not a security certification.
 
 ## Findings
 
@@ -24,7 +25,8 @@ penetration test and is not a security certification.
 | S11 | Info     | Accepted                 | Investigation import records the caller path; it does not copy target bytes into the project                                 | Prevents overwrite of `project.json` by import                                                                                                                                                                               |
 | S12 | Info     | Accepted                 | Deep engines / Frida / browser see the target as the current OS user when those commands are used                            | Not launched by `analyze-project`                                                                                                                                                                                            |
 | S13 | Info     | Observed                 | `writeInvestigationEvidence` writes `evidence/*.json` mode `0o600` under the project root                                    | Finding ids must match `^[A-Za-z0-9_]+$`                                                                                                                                                                                     |
-| S14 | Medium   | Open                     | Unported `main` session-cancellation (`3503578`) and Linux process-ownership (`01e00da`)                                     | Not merged. Residual vs current upstream `main`, not a newly confirmed local RCE                                                                                                                                             |
+| S14 | Medium   | **Fixed this increment** | Unsandboxed `bundleComparisonCancellation` received `EvidenceFileError` (`io`) for a cancelled oversized JSON read           | `JsonFiles.ts` now unwraps `AbortError` → `JsonInputCancellationFailure` as `AnalysisCancelledError`. BinarySession `3503578` and Linux ownership `01e00da` are ported. Residual: unported `34577eb` symlink-target bytes    |
+| S16 | Medium   | Open                     | Unported `main` Mach-O encryption (`860fdd8`) and undecodable symlink targets (`34577eb`)                                    | Not merged. Residual vs current upstream `main` `34577eb`, not a newly confirmed local RCE                                                                                                                                   |
 
 No critical (RCE, auth bypass, or unauthenticated remote write) finding was
 confirmed in the investigation-project path.
@@ -49,10 +51,12 @@ confirmed in the investigation-project path.
 - Application JSON logs appeared in the **test runner** output. That does not
   prove stdio MCP frames are mixed with logs in production; the dedicated
   `shutdown.test.ts` file passed.
-- Several MCP files failed in this environment (Frida, Electron, browser,
-  Rizin, pcap workspace, Mach-O summary, Ghidra reopen). Those failures are
-  recorded in [testing.md](testing.md). They are **not** claimed as new
-  investigation-layer defects.
+- Unsandboxed `npm run test:mcp` this increment: 1 failed / 1609 passed /
+  13 skipped. The failure was a cancellation misclassification, now fixed and
+  focused-retested. The full suite was not re-run after the fix.
+- Earlier sandboxed spawn/`posix_spawnp` failures (Frida, Rizin, pcap, Mach-O
+  summary, Ghidra reopen) passed in this unsandboxed run and are not product
+  defects.
 
 ## File handling and subprocesses (investigation path)
 
@@ -74,7 +78,10 @@ bypass, credential theft, or security-product evasion features.
 
 ## Residual risk
 
-Unported upstream process-ownership and session-cancellation fixes on `main`
-were **not** merged. Treat those as unknown relative to current `morluto/rea`
-`main`, not as verified local defects. Optional AI remains an outbound path
-when the operator enables it.
+Session-cancellation (`3503578`) and Linux process-ownership (`01e00da`) from
+`main` are now in this tree. Remaining unported safety-adjacent commits include
+Mach-O encryption (`860fdd8`) and undecodable symlink targets (`34577eb`).
+Treat those as unknown relative to current `morluto/rea` `main`
+`34577eb`, not as verified local defects. Optional AI remains an outbound path
+when the operator enables it. Publishing as `rea-agents` /
+`io.github.morluto/rea` remains an impersonation risk (S8).

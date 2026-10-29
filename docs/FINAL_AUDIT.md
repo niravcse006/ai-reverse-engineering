@@ -3,7 +3,8 @@
 Date: 2026-10-29.
 Workspace: `/Users/niravsoni/Projects/rea`.
 Repository: https://github.com/niravcse006/ai-reverse-engineering
-HEAD at start of this increment: `4c06200` (matched `origin/main`, clean tree).
+HEAD at start of this increment: `90a56fcd63ca3576679a173bb9fc58ea36b08200`
+(matched `origin/main`, clean tree).
 
 This is the authoritative current-state summary. Historical reports:
 [FINAL_IMPLEMENTATION_REPORT.md](FINAL_IMPLEMENTATION_REPORT.md),
@@ -19,73 +20,99 @@ ran**. It does not claim complete upstream parity or production readiness.
 
 | Item                           | Value                                                                  |
 | ------------------------------ | ---------------------------------------------------------------------- |
-| Local / GitHub `main` at start | `4c06200`                                                              |
+| Local / GitHub `main` at start | `90a56fcd63ca3576679a173bb9fc58ea36b08200`                             |
 | Compatible upstream release    | rea-agents **6.8.0** `160d821ac9a0310afcb8d1fc427862dd6508add5`        |
 | Imported snapshot              | `17ceb77ca5f2632faab8de01da4babff680eac48`                             |
-| Upstream `main` last recorded  | `1ef5918179d3cb77b8868bd117de662cbd7099ab` (ahead 12)                  |
-| Node used                      | v22.23.4 (`.nvmrc` 24.22.1 not installed)                              |
+| Previous pinned upstream tip   | `1ef5918179d3cb77b8868bd117de662cbd7099ab` (ahead 12)                  |
+| Upstream `main` this increment | `34577eb1cc264000a176ded68e5ebf8aba430edd` (ahead 17)                  |
+| Node used                      | v22.23.4 Darwin arm64 (`.nvmrc` 24.22.1 is not installed)              |
 | Identity                       | `rea-agents`, `io.github.morluto/rea` — **not renamed, not published** |
+
+`npm run upstream:drift` compared GitHub `17ceb77...main` and does not merge.
 
 ## 2. Defects fixed this increment
 
-| Defect                                                                                                     | Files                                                       | Tests                                                                   |
-| ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Completed jobs reused after detector/format change (`unknown` vs `mach-o-universal`)                       | `investigationProject.ts`, `ProjectStore.ts`, `Workflow.ts` | `investigationProject.test.ts`, `Workflow.test.ts` cache-identity cases |
-| `analyze-project` AI used `process.env` for the API key after `aiProviderStatus` read a caller environment | `Workflow.ts`                                               | `AiProvider.test.ts` local HTTP + failure path                          |
-| FAT prefix already classified as `mach-o-universal` (prior increment)                                      | `formatRegistry.ts`                                         | still passing                                                           |
+| Defect                                                                                       | Files                                                                                      | Tests                                                                                         |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| Cancelled oversized JSON / Evidence-bundle reads were reported as `EvidenceFileError` (`io`) | `JsonFiles.ts`                                                                             | `bundleComparisonCancellation.test.ts`, oversized-read cases in `evidenceBundleFiles.test.ts` |
+| BinarySession mutation retirement dropped later cancellation                                 | `BinarySession.ts`, `BinarySessionPort.ts`, `externalMutationAdmission.ts`, Rizin register | `gdbRetirementCancellation.test.ts` (7), new BinarySession composition cases                  |
+| Linux token-open ENOENT/ESRCH races could lose ownership corroboration                       | `ProcessOwnership.ts`, `ProcessOwnershipObservation.ts`, `ProcessRunTokenObservations.ts`  | `ProcessOwnership.nativeExit.test.ts` + exit-scope (135 passed, 2 Linux-only skipped)         |
+| Browser source-map declaration uncertainty was dropped from capture diffs                    | `CdpCaptureEventHandlers.ts`, `webCaptureDiff.ts`                                          | `cdpCaptureScriptMetadata.test.ts`, `webCaptureDiff.test.ts`, `browserCli.test.ts`            |
 
-Cache identity now includes `det=<INVESTIGATION_DETECTOR_VERSION>` and
-`fmt=<detected format>`. Older keys such as
-`sha256\|1.0.0\|auto\|dyn=0\|ai=0\|` do not match. Reuse also requires the
-stored `ev_format` title to match the live detector. Unchanged inputs still
-reuse. Existing projects invalidate safely by key mismatch.
+Cache invalidation, AI environment pass-through, and FAT-prefix classification
+from the previous increment remain in the tree and were not rewritten.
 
 ## 3. MCP classification (Priority 1)
 
-Sandboxed `npm run test:mcp` from the previous increment: exit **1**,
-**41 failed / 205 passed / 3 skipped** files, **139 failed / 1470 passed /
-14 skipped** tests. Diagnostics included `spawn EPERM` and Rizin
-`posix_spawnp`.
+Full unsandboxed command:
 
-This increment re-ran **8 files / 72 tests** with `npm run test:focused`
-**outside the agent sandbox**. Exit **0**. All 72 passed, including files
-that failed in the sandbox:
+```bash
+export PATH="$HOME/.nvm/versions/node/v22.23.4/bin:/usr/local/bin:$PATH"
+npm run test:mcp
+```
 
-| File                                     | Prior sandboxed result     | Unsandboxed result | Category              |
-| ---------------------------------------- | -------------------------- | ------------------ | --------------------- |
-| `pcapWorkspaceAllocation.test.ts`        | 10 failed                  | 10 passed          | Environment / sandbox |
-| `sourceToBundleViewsMcp.test.ts`         | 2 failed                   | 2 passed           | Environment / sandbox |
-| `nativeMachoSummaryMcp.test.ts`          | 3 failed                   | 4 passed           | Environment / sandbox |
-| `rizinPendingOutput.test.ts`             | 21 failed (`posix_spawnp`) | 21 passed          | Environment / sandbox |
-| `applicationMutationPresenceMcp.test.ts` | 14 failed                  | 14 passed          | Environment / sandbox |
-| `analyzeFunctionDetail.test.ts`          | 1 failed                   | 9 passed           | Environment / sandbox |
-| `decompileAllCaveats.test.ts`            | 5 failed                   | 5 passed           | Environment / sandbox |
-| `addressContextBookmarks.test.ts`        | 7 passed                   | 7 passed           | Confirmed pass        |
+| Item        | Value                                                          |
+| ----------- | -------------------------------------------------------------- |
+| Environment | Unrestricted local machine, not the agent sandbox              |
+| Node / OS   | v22.23.4 Darwin arm64                                          |
+| Exit code   | **1**                                                          |
+| Test files  | **1 failed / 246 passed / 2 skipped** (249)                    |
+| Tests       | **1 failed / 1609 passed / 13 skipped** (1623)                 |
+| Duration    | 1074.83 s (vitest); wall ~1218.9 s including pretest compile   |
+| Skipped     | `firmwareMcp.test.ts` (1), `javascriptRecoveryMcp.test.ts` (3) |
 
-**Confirmed product defects from the MCP suite:** none in the retested set.
-**Test defects:** none confirmed.
-**Environment / sandbox:** the 7 previously failing files above.
-**Missing dependency / platform:** not established for the retested set.
-**Undetermined:** the other previously failing files (Frida, Electron, browser,
-Ghidra reopen, Rizin output preservation, deferred runtime, snapshot replay,
-and others) were **not** re-run this increment.
+The single failure, classified from the stack and a focused reproduction:
 
-Full `npm run test:mcp` was **not** re-run unsandboxed here. Do not treat the
-sandboxed 139 failures as product defects, and do not treat the full suite as
-passing.
+| File / test                                                                              | Classification                  | Evidence                                                                                                                                    | Outcome this increment                                         |
+| ---------------------------------------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `bundleComparisonCancellation.test.ts` — leaves the session unchanged after cancellation | **1. Confirmed product defect** | Expected `AnalysisCancelledError`; received `EvidenceFileError` (`io`) whose cause was `AbortError` wrapping `JsonInputCancellationFailure` | Fixed in `JsonFiles.ts`. Focused retest: **1 passed** (109 ms) |
 
-## 4. Upstream ports (Priority 3)
+Not classified as environmental: the test spawned no restricted helper, ran
+unsandboxed in 30 ms, and reproduced as a typed-error mismatch.
 
-No additional `main` commits were ported this increment. Still **MISSING**:
-guidance `c88e1b0`, environment writes `131fbe0` / `51ad845`, BinarySession
-cancel `3503578`, Mach-O encryption `860fdd8`, Linux process-ownership
-`01e00da`, browser source-map `1ef5918`. Those remain the next reviewable
-ports.
+Files that previously failed in the sandbox and passed in this full unsandboxed
+run include Ghidra reopen, Rizin pending output and output preservation, pcap
+allocation, Frida MCP, Flutter MCP, environment serve writes, native Mach-O
+summary, and the earlier 8-file focused set. Those prior sandbox failures are
+**environment / sandbox**, not product defects.
 
-## 5. AI outbound verification (Priority 4)
+**Confirmed product defects remaining in the full MCP suite:** none observed
+after the focused retest of the one failure. The full suite was **not**
+re-run after that fix. Do not treat the suite as green.
+
+## 4. Upstream ports (Priority 3 / 4)
+
+Inspected actual GitHub patches against `34577eb`, then ported the smallest
+coherent behavior.
+
+| Commit    | Feature                                       | Status this increment                                      |
+| --------- | --------------------------------------------- | ---------------------------------------------------------- |
+| `3503578` | BinarySession cancellation during retirement  | **Ported and tested**                                      |
+| `01e00da` | Linux exiting-process ownership corroboration | **Ported and tested** (live Linux spawn skipped on Darwin) |
+| `1ef5918` | Browser source-map declaration uncertainty    | **Ported and tested**                                      |
+| `131fbe0` | Environment varied-member writes              | **Not ported** (24 files, +1474). Too large for this pass  |
+| `51ad845` | Environment sorted creates / toggles          | **Not ported** (25 files)                                  |
+| `860fdd8` | Mach-O per-slice encryption                   | **Not ported** (27 files, includes load-command refactor)  |
+| `c88e1b0` | Guidance search                               | **Not ported** (33 files, +2117)                           |
+
+New commits after the previous pinned tip `1ef5918`, inspected but not ported:
+
+| Commit    | Subject                                      | Classification                         |
+| --------- | -------------------------------------------- | -------------------------------------- |
+| `6fa48f2` | APK signer-agreement docs                    | Not applicable (docs / test assertion) |
+| `5c05eb8` | JavaScript semantic-trace operator influence | Missing (breaking, 24 files)           |
+| `22cab82` | .NET single-file bundle inspect/extract      | Missing (new capability, 27 files)     |
+| `e124bdf` | CLI literal Markdown rendering               | Missing (small, not taken this pass)   |
+| `34577eb` | Undecodable symlink target bytes             | Missing (safety, 16 files)             |
+
+Investigation-project workflow and public interfaces were not renamed.
+
+## 5. AI outbound verification (Priority 5)
 
 Controlled **127.0.0.1** HTTP server + injected `fetch`. No external provider
-and no confidential binaries.
+and no confidential binaries. Re-ran this increment:
+
+`npm run test:local -- src/domain/aiProviderContract.test.ts src/application/investigationProject/AiProvider.test.ts` — exit 0, **8 passed**.
 
 | Check                     | Result                                                                                           |
 | ------------------------- | ------------------------------------------------------------------------------------------------ |
@@ -96,30 +123,58 @@ and no confidential binaries.
 
 ## 6. Commands run this increment
 
-| Command                                                              | Exit                                          |
-| -------------------------------------------------------------------- | --------------------------------------------- |
-| `npm run test:local --` investigationProject + Workflow + AiProvider | 0 (19 tests)                                  |
-| `npm run test:focused --` 8 MCP files listed above                   | 0 (72 tests)                                  |
-| `npm run check:fast`                                                 | 0 after splitting the cache-identity describe |
-| `npm audit --omit=dev`                                               | 0 (0 production vulnerabilities)              |
-| `npm run docs:check`                                                 | 0                                             |
-| `npm run verify:package`                                             | 0 (unsandboxed; sandbox `spawn EPERM` first)  |
-| `npm test` / `check:pr` / full `test:mcp`                            | **not run**                                   |
+| Command                                                                                        | Exit | Result                                                            |
+| ---------------------------------------------------------------------------------------------- | ---- | ----------------------------------------------------------------- |
+| `npm run upstream:drift`                                                                       | 0    | Tip `34577eb`, ahead 17                                           |
+| `npm run test:mcp` (unsandboxed)                                                               | 1    | 1 failed / 1609 passed / 13 skipped                               |
+| `npm run test:focused --` bundleComparisonCancellation + evidenceBundleFiles + gdb + browser   | 0    | 5 files, **100 passed** (includes the previous MCP failure)       |
+| `npm run test:focused -- tests/boundary/cli/browserCli.test.ts`                                | 0    | 14 passed, including source-map omission CLI                      |
+| `npm run test:local --` BinarySession + restoration/status/liveness                            | 0    | 4 files, **82 passed**                                            |
+| `npm run test:local --` ProcessOwnership nativeExit/exitScope/test/exiting/validation/identity | 0    | 6 files, **135 passed / 2 skipped**                               |
+| `npm run test:local --` AiProvider + aiProviderContract                                        | 0    | 2 files, **8 passed**                                             |
+| `npm run check:fast`                                                                           | 0    | typecheck + lint                                                  |
+| `npm run docs:check`                                                                           | 0    | generated-doc validation + 9 readme-consistency tests             |
+| `npm audit --omit=dev`                                                                         | 0    | 0 production vulnerabilities                                      |
+| `npm pack --dry-run`                                                                           | 0    | `rea-agents-6.8.0.tgz` listed                                     |
+| `npm test`                                                                                     | —    | **NOT RUN**                                                       |
+| `npm run check:pr`                                                                             | —    | **NOT RUN** (complete local gate)                                 |
+| `npm run verify:package`                                                                       | —    | **NOT RUN** this increment. Previous increment passed unsandboxed |
+| Clean temporary install of the packed tarball                                                  | —    | **NOT RUN**                                                       |
+| Live Ghidra / Hopper / IDA / JADX / Frida / external AI                                        | —    | **NOT RUN**                                                       |
 
-## 7. Remaining work
+## 7. Package identity and distribution
 
-- Unsandboxed full `npm run test:mcp`.
-- Incremental ports of the six `main` commits above, starting with
-  BinarySession cancellation and Linux process-ownership.
-- `npm test` and `check:pr`.
+The package still identifies itself as `rea-agents` with MCP identity
+`io.github.morluto/rea`. Those names belong to upstream. Publishing this fork
+under them would impersonate the official release.
+
+No rename was applied. Proposed independent identifiers for owner approval
+(not implemented):
+
+- npm package: `ai-reverse-engineering` or `@niravcse006/rea`
+- MCP identity: `io.github.niravcse006/ai-reverse-engineering`
+
+Do not publish until the owner chooses names and the package metadata is
+changed. Homepage/bugs already point at
+https://github.com/niravcse006/ai-reverse-engineering.
+
+## 8. Remaining work
+
+- Guidance, environment write views, Mach-O encryption, JavaScript semantic
+  traces, .NET single-file bundles, CLI Markdown literals, and undecodable
+  symlink targets remain unported.
+- Re-run full unsandboxed `npm run test:mcp` after the JSON-cancellation fix
+  if a green-suite claim is needed.
+- `npm test`, `check:pr`, and a clean packed-install smoke remain outstanding.
 - Owner decision before any package rename or publish.
 
-## 8. Conclusion
+## 9. Conclusion
 
-Cache invalidation and AI environment pass-through are fixed and tested. MCP
-failures that were retested unsandboxed passed and are classified as sandbox
-limitations. Upstream feature completeness is **not** achieved. The project is
-**not** production-ready.
+Three previously missing `main` behaviors are now in this tree with tests.
+The full unsandboxed MCP suite found one product defect; that defect is fixed
+and retested, but the suite was not re-run. Upstream feature completeness is
+**not** achieved. The project is **not** production-ready.
 
-Release recommendation: **local development**. Broader testing needs an
-unsandboxed full MCP run. Not for production release.
+Release recommendation: **local development**. Broader beta testing would
+still require a post-fix full MCP re-run plus `check:pr`. Not for production
+release.

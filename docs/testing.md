@@ -41,22 +41,27 @@ not merge them.
 ### Current increment verification (2026-10-29)
 
 Authoritative summary: [FINAL_AUDIT.md](FINAL_AUDIT.md). Commands actually run
-in this increment, with Node v22.23.4 (`.nvmrc` 24.22.1 is not installed):
+in this increment, with Node v22.23.4 Darwin arm64 (`.nvmrc` 24.22.1 is not
+installed). Upstream tip compared: `34577eb1cc264000a176ded68e5ebf8aba430edd`.
 
-| Command                                                                                                     | Exit    | Result                                                                                                                   |
-| ----------------------------------------------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `npm run test:local --` Workflow, RemainingWorkflows, AnalysisContextQueries, AppleDispatchMetadata.failure | 0       | 4 files, 48 passed                                                                                                       |
-| `npm run check:fast`                                                                                        | 0       | typecheck + lint                                                                                                         |
-| `npm audit --omit=dev`                                                                                      | 0       | 0 production vulnerabilities                                                                                             |
-| `npm run test:mcp` (sandboxed, prior increment)                                                             | 1       | **41 failed / 205 passed / 3 skipped** files; **139 failed / 1470 passed / 14 skipped** tests. Do not treat as passing.  |
-| `npm run test:focused --` 8 MCP files unsandboxed                                                           | 0       | **72 passed**, including files that failed under `spawn EPERM` / `posix_spawnp`. Full unsandboxed `test:mcp` not re-run. |
-| `npm run test:focused --` addressContextBookmarks + nativeDispatchFormatFailures                            | 0       | 2 files, 14 passed                                                                                                       |
-| `rea inspect-macho /usr/bin/true`                                                                           | 0       | Real `native-macos` provider; `mach-o-universal`, selected arm64e                                                        |
-| `npm test`                                                                                                  | not run | Full source + compiled suite not completed                                                                               |
-| `npm run check:pr`                                                                                          | not run | Complete local gate not completed                                                                                        |
-| `npm run verify:package`                                                                                    | not run | `npm pack --dry-run` listed `rea-agents-6.8.0.tgz`; full tarball install not completed                                   |
-| `npm run docs:check`                                                                                        | not run | Generated-doc validation not completed                                                                                   |
-| Live Ghidra / Hopper / IDA / JADX / Frida / AI HTTP                                                         | not run | Tools or credentials unavailable or not invoked                                                                          |
+| Command                                                                                        | Exit    | Result                                                                                                |
+| ---------------------------------------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------- |
+| `npm run upstream:drift`                                                                       | 0       | Tip `34577eb`, ahead 17                                                                               |
+| `npm run test:mcp` (unsandboxed)                                                               | 1       | **1 failed / 246 passed / 2 skipped** files; **1 failed / 1609 passed / 13 skipped** tests; 1074.83 s |
+| `npm run test:focused --` bundleComparisonCancellation + evidenceBundleFiles + gdb + browser   | 0       | 5 files, **100 passed** (includes the previous MCP failure after the JSON-cancellation fix)           |
+| `npm run test:focused -- tests/boundary/cli/browserCli.test.ts`                                | 0       | 14 passed                                                                                             |
+| `npm run test:local --` BinarySession + restoration/status/liveness                            | 0       | 4 files, 82 passed                                                                                    |
+| `npm run test:local --` ProcessOwnership nativeExit/exitScope/test/exiting/validation/identity | 0       | 6 files, 135 passed / 2 skipped                                                                       |
+| `npm run test:local --` AiProvider + aiProviderContract                                        | 0       | 2 files, 8 passed                                                                                     |
+| `npm run check:fast`                                                                           | 0       | typecheck + lint                                                                                      |
+| `npm run docs:check`                                                                           | 0       | generated-doc validation + 9 readme-consistency tests                                                 |
+| `npm audit --omit=dev`                                                                         | 0       | 0 production vulnerabilities                                                                          |
+| `npm pack --dry-run`                                                                           | 0       | listed `rea-agents-6.8.0.tgz`                                                                         |
+| `npm test`                                                                                     | not run | Full source + compiled suite not completed                                                            |
+| `npm run check:pr`                                                                             | not run | Complete local gate not completed                                                                     |
+| `npm run verify:package`                                                                       | not run | Prior increment passed unsandboxed; not re-run here                                                   |
+| Clean packed-tarball install                                                                   | not run | CLI/MCP startup from a clean temp install was not executed                                            |
+| Live Ghidra / Hopper / IDA / JADX / Frida / external AI                                        | not run | Tools or credentials unavailable or not invoked                                                       |
 
 Reproduction for the investigation + native ports:
 
