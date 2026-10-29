@@ -14,32 +14,16 @@ const temporaryRoots: string[] = [];
 
 const README_FACT_FIXTURE_PATHS = [
   "README.md",
-  "docs/readme/README_zh.md",
-  "docs/readme/README_ja.md",
-  "docs/readme/README_ko.md",
-  "docs/readme/README_ar.md",
-  "website/locales/languages.json",
   "docs/installation.md",
   "AGENTS.md",
   ".github/pull_request_template.md",
 ] as const;
 
-const README_LINK_DRIFT_MUTATIONS = [
-  [
-    "(../installation.md#supported-agents)",
-    "(../installation.md#missing-agents)",
-  ],
-  ["https://rea.tools/zh-CN/guides/", "https://rea.tools/zh-CN/missing/"],
-  ["https://rea.tools/zh-CN/guides/", "https://rea.tools/zh-TW/guides/"],
-  [
-    "https://rea.tools/zh-CN/guides/",
-    "https://rea.tools/zh-CN/guides/?other=1",
-  ],
-  [
-    'src="../assets/rea-hopper-analysis.png"',
-    'src="../assets/missing-hopper.png"',
-  ],
-  ['href="https://discord.gg/GkcryMnJDM"', 'href="https://discord.gg/missing"'],
+const README_REQUIRED_FACTS = [
+  "MCP-tool_catalog",
+  "(docs/installation.md#supported-agents)",
+  "(docs/installation.md#mcp-registry)",
+  "(docs/mcp-contracts.md#generated-catalog)",
 ] as const;
 
 const seedReadmeFactFixture = async (directory: string) => {
@@ -61,31 +45,26 @@ afterEach(async () => {
   );
 });
 
-describe("translated README facts", () => {
-  it("keeps translated readmes linked to canonical setup and tool details", async () => {
+describe("product README facts", () => {
+  it("keeps the English README linked to setup and the tool catalog", async () => {
     const directory = await createTestTempDirectory("rea-readme-facts-");
     temporaryRoots.push(directory);
     await seedReadmeFactFixture(directory);
-    const translatedPath = join(directory, "docs/readme/README_zh.md");
-    const translated = await readFile(translatedPath, "utf8");
     const catalog: ProductCatalog = JSON.parse(
       await readFile(join(root, "docs/public/product-catalog.json"), "utf8"),
     );
     await expect(documentationFactIssues(directory, catalog)).resolves.toEqual(
       [],
     );
-    for (const [original, changed] of README_LINK_DRIFT_MUTATIONS) {
-      expect(translated).toContain(original);
-      await writeFile(
-        translatedPath,
-        translated.replace(original, changed),
-        "utf8",
+    const readmePath = join(directory, "README.md");
+    const readme = await readFile(readmePath, "utf8");
+    for (const fact of README_REQUIRED_FACTS) {
+      expect(readme).toContain(fact);
+      await writeFile(readmePath, readme.replaceAll(fact, ""), "utf8");
+      await expect(documentationFactIssues(directory, catalog)).resolves.toEqual(
+        [`README.md: missing ${fact}`],
       );
-      await expect(
-        documentationFactIssues(directory, catalog),
-      ).resolves.toEqual([
-        "docs/readme/README_zh.md: documentation links differ from README.md",
-      ]);
+      await writeFile(readmePath, readme, "utf8");
     }
   });
 });

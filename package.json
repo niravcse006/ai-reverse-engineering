@@ -2,33 +2,37 @@
   "name": "rea-agents",
   "mcpName": "io.github.morluto/rea",
   "version": "6.8.0",
-  "description": "Reverse engineer anything from your terminal or agent with one CLI and MCP server.",
+  "description": "AI-powered reverse engineering platform for local binary analysis, decompilation, program understanding, and evidence-backed investigation.",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/morluto/rea.git"
+    "url": "git+https://github.com/niravcse006/ai-reverse-engineering.git"
   },
-  "homepage": "https://github.com/morluto/rea#readme",
+  "homepage": "https://github.com/niravcse006/ai-reverse-engineering#readme",
   "bugs": {
-    "url": "https://github.com/morluto/rea/issues"
+    "url": "https://github.com/niravcse006/ai-reverse-engineering/issues"
   },
   "keywords": [
+    "ai-reverse-engineering",
     "reverse-engineering",
     "binary-analysis",
-    "agents",
-    "agent-skills",
-    "cli",
+    "decompiler",
+    "decompilation",
+    "ghidra",
+    "ida",
+    "hopper",
+    "static-analysis",
+    "malware-analysis",
+    "vulnerability-research",
+    "mcp",
     "mcp-server",
     "model-context-protocol",
-    "static-analysis",
-    "rea",
-    "decompiler",
-    "mcp",
-    "hopper",
+    "cli",
+    "agents",
     "electron",
     "javascript-analysis",
-    "ghidra",
-    "ida"
+    "android",
+    "firmware"
   ],
   "publishConfig": {
     "access": "public"
