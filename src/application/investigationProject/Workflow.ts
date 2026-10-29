@@ -444,24 +444,30 @@ export const runInvestigationWorkflow = async (
     ai_disclosure: aiDisclosure,
     limitations: job.limitations,
   };
-  const written = await writeInvestigationReports(projectRoot, job.job_id, {
-    json: renderInvestigationReportJson(report),
-    markdown: renderInvestigationReportMarkdown(report),
-  });
-  if (!written.ok) return fail("generate_report", written.error.userMessage ?? written.error.message, {
-    format: format.value,
-    backends,
-    report,
-  });
+  const reportsDir = investigationProjectPaths(projectRoot).reports;
+  const reportPaths = {
+    json: join(reportsDir, `${job.job_id}.json`),
+    markdown: join(reportsDir, `${job.job_id}.md`),
+  };
   job = {
     ...updateStage(job, "generate_report", "completed", {
-      summary: written.value.markdown,
+      summary: reportPaths.markdown,
     }),
-    report_paths: written.value,
+    report_paths: reportPaths,
     status: "completed",
   };
   job = updateStage(job, "persist_job", "completed", {
     summary: job.job_id,
+  });
+  const completedReport = { ...report, job };
+  const written = await writeInvestigationReports(projectRoot, job.job_id, {
+    json: renderInvestigationReportJson(completedReport),
+    markdown: renderInvestigationReportMarkdown(completedReport),
+  });
+  if (!written.ok) return fail("generate_report", written.error.userMessage ?? written.error.message, {
+    format: format.value,
+    backends,
+    report: completedReport,
   });
   const persisted = await saveInvestigationJob(projectRoot, job);
   if (!persisted.ok) return persisted;
@@ -473,7 +479,7 @@ export const runInvestigationWorkflow = async (
     job: persisted.value,
     format: format.value,
     backends,
-    report: { ...report, job: persisted.value },
+    report: { ...completedReport, job: persisted.value },
     plugins: await loadPlugins(projectRoot),
   });
 };

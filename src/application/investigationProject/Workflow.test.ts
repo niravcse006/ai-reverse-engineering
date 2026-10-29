@@ -1,4 +1,4 @@
-import { mkdtemp, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -48,6 +48,10 @@ describe("investigation project workflow", () => {
     expect(analyzed.value.report?.provenance.node_version).toMatch(/^v/u);
     expect(analyzed.value.report?.ai_disclosure?.provider).toBe("none");
     expect(analyzed.value.report?.ai_disclosure?.attempted).toBe(false);
+    const storedReport = JSON.parse(
+      await readFile(analyzed.value.job.report_paths.json ?? "", "utf8"),
+    ) as { job: { status: string } };
+    expect(storedReport.job.status).toBe("completed");
     const again = await runInvestigationWorkflow(root, imported.value.target.target_id, {
       environment: {},
     });

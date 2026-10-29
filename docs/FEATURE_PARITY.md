@@ -1,5 +1,7 @@
 # Feature parity
 
+Current comparison, including Mach-O per-slice encryption on upstream `main`: [FINAL_AUDIT.md](FINAL_AUDIT.md).
+
 Statuses use the required vocabulary. File paths are the evidence for each row.
 
 | Feature | Status | This tree | Upstream | Tests |
