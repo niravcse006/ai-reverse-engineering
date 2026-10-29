@@ -36,7 +36,8 @@ Empty files are rejected.
 
 ### `inspect-target`
 
-Format detection, hash, and backend availability without creating a job.
+Format detection, hash, backend availability, and remaining usable commands
+without creating a job.
 
 ```text
 rea inspect-target /absolute/path/to/target --project /absolute/path/to/project --json

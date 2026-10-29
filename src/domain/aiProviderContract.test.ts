@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  createAiDisclosure,
   parseAiInterpretation,
   parseAiProviderSettings,
   wrapUntrustedTargetContent,
@@ -51,5 +52,26 @@ describe("AI provider contract", () => {
       provider: "none",
       endpoint: null,
     });
+  });
+
+  it("records AI disclosure without the API key or full URL path secrets", () => {
+    const disclosure = createAiDisclosure({
+      settings: {
+        provider: "openai-compatible",
+        model: "local-model",
+        endpoint: "https://example.test/v1/chat?token=secret",
+        timeoutMs: 1000,
+        retries: 1,
+        tokenLimit: 128,
+        spendingLimitUsd: 0,
+      },
+      bytesOffered: 32,
+      operatorAuthorized: true,
+      attempted: false,
+      reason: "Spend limit is 0.",
+    });
+    expect(disclosure.endpoint_host).toBe("example.test");
+    expect(JSON.stringify(disclosure)).not.toContain("secret");
+    expect(JSON.stringify(disclosure)).not.toContain("sk-");
   });
 });

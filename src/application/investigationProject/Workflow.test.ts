@@ -42,6 +42,16 @@ describe("investigation project workflow", () => {
       true,
     );
     expect(analyzed.value.job.limitations.join(" ")).toContain("never executed");
+    expect(analyzed.value.report?.remaining_workflows.some((item) => item.usable)).toBe(
+      true,
+    );
+    expect(analyzed.value.report?.provenance.node_version).toMatch(/^v/u);
+    expect(analyzed.value.report?.ai_disclosure?.provider).toBe("none");
+    expect(analyzed.value.report?.ai_disclosure?.attempted).toBe(false);
+    const again = await runInvestigationWorkflow(root, imported.value.target.target_id, {
+      environment: {},
+    });
+    expect(again.ok && again.value.reused_job).toBe(true);
   });
 
   it("inspects a target without executing it and keeps empty files out of import", async () => {
@@ -55,6 +65,43 @@ describe("investigation project workflow", () => {
     await writeFile(emptyPath, Buffer.alloc(0));
     const imported = await importInvestigationTarget(root, emptyPath);
     expect(imported.ok).toBe(false);
+  });
+
+  it("reuses a duplicate target and rejects a corrupted project document", async () => {
+    const root = await projectRoot();
+    await createInvestigationProject(root, "dupes");
+    const targetPath = join(root, "sample.so");
+    await writeFile(targetPath, elf(2, 1, 183));
+    const first = await importInvestigationTarget(root, targetPath);
+    const second = await importInvestigationTarget(root, targetPath);
+    expect(first.ok && second.ok && first.value.target.target_id).toBe(
+      second.ok ? second.value.target.target_id : "",
+    );
+    await writeFile(join(root, "project.json"), "{not-json");
+    const reloaded = await importInvestigationTarget(root, targetPath);
+    expect(reloaded.ok).toBe(false);
+  });
+
+  it("refuses a zero spend limit before sending evidence", async () => {
+    const interpreted = await interpretEvidenceWithAi({
+      question: "explain",
+      evidence: "unused",
+      settings: {
+        provider: "openai-compatible",
+        model: "x",
+        endpoint: "https://example.test/v1",
+        timeoutMs: 1000,
+        retries: 0,
+        tokenLimit: 16,
+        spendingLimitUsd: 0,
+      },
+      fetchImpl: async () => {
+        throw new Error("fetch must not run");
+      },
+    });
+    expect(interpreted.ok).toBe(false);
+    if (interpreted.ok) throw new Error("expected refusal");
+    expect(interpreted.error).toContain("REA_AI_SPENDING_LIMIT_USD is 0");
   });
 
   it("reports angr as unavailable and does not invent a ready AI provider", async () => {

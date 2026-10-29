@@ -35,6 +35,8 @@ are discarded.
 
 ## Spending and tokens
 
-`REA_AI_TOKEN_LIMIT` is passed to the provider request. A spending-limit
-environment variable is recorded for later enforcement; this increment does
-not contact a billing API.
+`REA_AI_TOKEN_LIMIT` is passed to the provider request. `REA_AI_SPENDING_LIMIT_USD=0`
+refuses the HTTP call. Other positive values are recorded only; this increment
+does not contact a billing API. Reports store `ai_disclosure` with provider,
+model, endpoint host, and byte count. They do not store the API key. See
+[PRIVACY.md](PRIVACY.md).

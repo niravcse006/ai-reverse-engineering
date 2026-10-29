@@ -28,6 +28,9 @@ and the controls implemented or still residual in this working copy.
 - AI exploitability rejection (`aiProviderContract.test.ts`)
 - Report writer rejects unsafe job ids
 - CLI workflow completes on a synthetic ELF without executing it
+- Duplicate-target reuse and corrupted `project.json` refusal (`Workflow.test.ts`)
+- AI disclosure omits endpoint query secrets (`aiProviderContract.test.ts`)
+- Spend limit `0` refuses fetch (`Workflow.test.ts`)
 
 ## Residual risks
 

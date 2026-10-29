@@ -172,6 +172,10 @@ export const addProjectTarget = async (
 ): Promise<Result<InvestigationTarget, AnalysisInputError>> => {
   const loaded = await loadInvestigationProject(root);
   if (!loaded.ok) return loaded;
+  const duplicate = loaded.value.targets.find(
+    (entry) => entry.sha256 === target.sha256 && entry.path === target.path,
+  );
+  if (duplicate !== undefined) return ok(duplicate);
   const imported: InvestigationTarget = {
     ...target,
     target_id: `tgt_${randomUUID().replaceAll("-", "")}`,
@@ -241,6 +245,18 @@ export const loadInvestigationJob = async (
   }
   const job = parseInvestigationJob(parsed);
   return job.ok ? ok(job.value) : err(inputError("resume_job", job.error, ["job_id"]));
+};
+
+export const findReusableCompletedJob = async (
+  root: string,
+  cacheKey: string,
+): Promise<Result<InvestigationJob | null, AnalysisInputError>> => {
+  const listed = await listInvestigationJobs(root);
+  if (!listed.ok) return listed;
+  const reusable = listed.value.find(
+    (job) => job.status === "completed" && job.cache_key === cacheKey,
+  );
+  return ok(reusable ?? null);
 };
 
 export const listInvestigationJobs = async (

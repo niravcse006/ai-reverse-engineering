@@ -160,12 +160,16 @@ layer. It is **not** claimed to be better than [morluto/rea](https://github.com/
 On 2026-10-29 upstream `main` was 8 commits ahead of the imported snapshot.
 
 The scorecard is [docs/VERIFICATION_CHECKLIST.md](docs/VERIFICATION_CHECKLIST.md).
-P0 work is parity, multi-engine interfaces, evidence-linked conclusions, and
-local-first AI disclosure. New engines or a longer feature list are not next.
+Comparison notes: [docs/UPSTREAM_COMPARISON.md](docs/UPSTREAM_COMPARISON.md),
+[docs/FEATURE_PARITY.md](docs/FEATURE_PARITY.md). This tree is still behind
+upstream `main` on guidance, environment writes, and some native/session fixes.
+New engines or a longer feature list are not next.
 
 ## Documentation
 
 - [Verification checklist](docs/VERIFICATION_CHECKLIST.md)
+- [Upstream comparison](docs/UPSTREAM_COMPARISON.md), [feature parity](docs/FEATURE_PARITY.md), [implementation plan](docs/IMPLEMENTATION_PLAN.md)
+- [Investigation projects](docs/INVESTIGATION_PROJECTS.md), [reporting](docs/REPORTING.md), [supported formats](docs/SUPPORTED_FORMATS.md), [privacy](docs/PRIVACY.md)
 - [Installation and agent setup](docs/installation.md)
 - [CLI](docs/cli.md) and [investigation CLI](docs/CLI_REFERENCE.md)
 - [MCP contracts](docs/mcp-contracts.md) and [tool catalog](docs/mcp-contracts.md#generated-catalog)

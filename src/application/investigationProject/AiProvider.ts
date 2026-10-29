@@ -33,6 +33,8 @@ export const interpretEvidenceWithAi = async (
   const settings = request.settings ?? parseAiProviderSettings(environment);
   if (settings.provider === "none")
     return unavailable(settings, "REA_AI_PROVIDER is unset or none.");
+  if (settings.spendingLimitUsd === 0)
+    return unavailable(settings, "REA_AI_SPENDING_LIMIT_USD is 0; the request was not sent.");
   const apiKey = environment.REA_AI_API_KEY;
   if (settings.provider !== "ollama" && (apiKey === undefined || apiKey.length === 0))
     return unavailable(settings, "REA_AI_API_KEY is not configured.");

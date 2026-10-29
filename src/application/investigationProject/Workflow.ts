@@ -20,7 +20,13 @@ import {
   type InvestigationStageId,
   type InvestigationTarget,
 } from "../../domain/investigationProject.js";
-import { parseAiInterpretation, type AiInterpretation } from "../../domain/aiProviderContract.js";
+import {
+  createAiDisclosure,
+  parseAiInterpretation,
+  parseAiProviderSettings,
+  type AiDisclosure,
+  type AiInterpretation,
+} from "../../domain/aiProviderContract.js";
 import { err, ok, type Result } from "../../domain/result.js";
 import {
   renderInvestigationReportJson,
@@ -32,12 +38,14 @@ import { probeAnalysisBackends, type BackendAvailability } from "./BackendProbe.
 import {
   addProjectTarget,
   createInvestigationJob,
+  findReusableCompletedJob,
   hashLocalFile,
   investigationProjectPaths,
   loadInvestigationJob,
   loadInvestigationProject,
   saveInvestigationJob,
 } from "./ProjectStore.js";
+import { remainingWorkflowsFor } from "./RemainingWorkflows.js";
 import { writeInvestigationReports } from "./ReportWriter.js";
 
 const MAX_PROBE_BYTES = 8 * 1024;
@@ -81,6 +89,7 @@ export interface InvestigationWorkflowResult {
   readonly backends: readonly BackendAvailability[];
   readonly report: InvestigationReport | null;
   readonly plugins: readonly PluginManifest[];
+  readonly reused_job?: boolean;
 }
 
 const detectTargetFormat = async (
@@ -245,11 +254,30 @@ export const runInvestigationWorkflow = async (
   const environment = options.environment ?? process.env;
   let job: InvestigationJob;
   if (options.resumeJobId === undefined) {
-    job = createInvestigationJob(target, {
+    const candidate = createInvestigationJob(target, {
       ...project.value.config,
       authorize_dynamic:
         options.authorizeDynamic ?? project.value.config.authorize_dynamic,
     });
+    const reusable = await findReusableCompletedJob(projectRoot, candidate.cache_key);
+    if (!reusable.ok) return reusable;
+    if (reusable.value !== null) {
+      const format = await detectTargetFormat(target.path);
+      if (!format.ok)
+        return err(inputError("analyze_project", format.error.userMessage ?? format.error.message));
+      const backends = await probeAnalysisBackends(environment);
+      return ok({
+        project: project.value,
+        target,
+        job: reusable.value,
+        format: format.value,
+        backends,
+        report: null,
+        plugins: await loadPlugins(projectRoot),
+        reused_job: true,
+      });
+    }
+    job = candidate;
   } else {
     const resumed = await loadInvestigationJob(projectRoot, options.resumeJobId);
     if (!resumed.ok) return resumed;
@@ -336,10 +364,26 @@ export const runInvestigationWorkflow = async (
 
   let ai: AiInterpretation | null = null;
   const aiStatus = aiProviderStatus(environment);
+  const evidenceBytes = Buffer.byteLength(JSON.stringify(job.findings), "utf8");
+  let aiDisclosure: AiDisclosure = createAiDisclosure({
+    settings: aiStatus.settings,
+    bytesOffered: evidenceBytes,
+    operatorAuthorized: job.ai_enabled,
+    reason: "AI interpretation is skipped unless a provider is configured and the job enables it.",
+  });
   if (job.ai_enabled && aiStatus.ready) {
+    aiDisclosure = createAiDisclosure({
+      settings: aiStatus.settings,
+      bytesOffered: evidenceBytes,
+      operatorAuthorized: true,
+      attempted: true,
+      reason:
+        "Operator enabled project AI. Evidence JSON is sent to the configured endpoint. The API key is not included in this report.",
+    });
     const interpreted = await interpretEvidenceWithAi({
       question: "Summarize the observed findings without claiming exploitability.",
       evidence: JSON.stringify(job.findings),
+      settings: parseAiProviderSettings(environment),
       fetchImpl: globalThis.fetch,
     });
     if (interpreted.ok) {
@@ -363,6 +407,12 @@ export const runInvestigationWorkflow = async (
     });
   }
 
+  const remaining = remainingWorkflowsFor(format.value.format, backends);
+  job.limitations.push(
+    ...remaining
+      .filter((workflow) => !workflow.usable)
+      .map((workflow) => `${workflow.command}: ${workflow.reason}`),
+  );
   const report: InvestigationReport = {
     schema: "rea.investigation-report.v1",
     generated_at: new Date().toISOString(),
@@ -382,8 +432,16 @@ export const runInvestigationWorkflow = async (
       available: backend.available,
       reason: backend.reason,
     })),
+    remaining_workflows: remaining,
+    provenance: {
+      node_version: process.version,
+      platform: process.platform,
+      arch: process.arch,
+      workflow_version: INVESTIGATION_WORKFLOW_VERSION,
+    },
     findings: job.findings,
     ai,
+    ai_disclosure: aiDisclosure,
     limitations: job.limitations,
   };
   const written = await writeInvestigationReports(projectRoot, job.job_id, {
@@ -431,6 +489,7 @@ export const inspectInvestigationTarget = async (
       readonly size_bytes: number;
       readonly format: FormatDetection;
       readonly backends: readonly BackendAvailability[];
+      readonly remaining_workflows: ReturnType<typeof remainingWorkflowsFor>;
       readonly workflow_version: string;
     },
     AnalysisInputError
@@ -442,12 +501,14 @@ export const inspectInvestigationTarget = async (
   const hashed = await hashLocalFile(resolved);
   const format = await detectTargetFormat(resolved);
   if (!format.ok) return format;
+  const backends = await probeAnalysisBackends();
   return ok({
     path: resolved,
     sha256: hashed.ok ? hashed.value.sha256 : null,
     size_bytes: hashed.ok ? hashed.value.sizeBytes : 0,
     format: format.value,
-    backends: await probeAnalysisBackends(),
+    backends,
+    remaining_workflows: remainingWorkflowsFor(format.value.format, backends),
     workflow_version: INVESTIGATION_WORKFLOW_VERSION,
   });
 };

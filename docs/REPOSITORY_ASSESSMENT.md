@@ -1,6 +1,7 @@
 # Repository assessment
 
-Assessment date: 2026-10-29.
+Assessment date: 2026-10-29. Updated the same day after the investigation-report
+increment. Current comparison: [UPSTREAM_COMPARISON.md](UPSTREAM_COMPARISON.md).
 
 This working copy was created from the published GitHub archive of
 [morluto/rea](https://github.com/morluto/rea) `main`. Git clone into a sibling

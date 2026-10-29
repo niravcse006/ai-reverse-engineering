@@ -61,8 +61,30 @@ const report = (): InvestigationReport => ({
       reason: "always available",
     },
   ],
+  remaining_workflows: [
+    {
+      command: "inspect-target / analyze-project",
+      usable: true,
+      reason: "Bounded hashing always runs.",
+    },
+  ],
+  provenance: {
+    node_version: "v22.23.4",
+    platform: "darwin",
+    arch: "arm64",
+    workflow_version: "1.0.0",
+  },
   findings: [],
   ai: null,
+  ai_disclosure: {
+    attempted: false,
+    operator_authorized: false,
+    provider: "none",
+    model: null,
+    endpoint_host: null,
+    bytes_offered: 0,
+    reason: "No AI provider was configured.",
+  },
   limitations: ["Unknown binaries are never executed."],
 });
 
@@ -77,5 +99,8 @@ describe("investigation reports", () => {
     });
     expect(markdown).toContain("ev_format");
     expect(markdown).toContain("Unknown binaries are never executed");
+    expect(markdown).toContain("Remaining workflows");
+    expect(markdown).toContain("Provenance");
+    expect(markdown).not.toContain("sk-");
   });
 });

@@ -2,144 +2,115 @@
 
 Date: 2026-10-29.
 Workspace: `/Users/niravsoni/Projects/rea`.
+This report distinguishes commands that ran from work that was not executed.
 
-## Summary of changes
+## 1. Baseline and upstream reference
 
-This working copy starts from upstream REA 6.8.0
-(`17ceb77ca5f2632faab8de01da4babff680eac48`) and adds an investigation-project
-layer: persistent projects, format diagnostics, backend availability probes,
-optional AI interpretation, plugin-metadata validation, and Markdown/JSON
-reports. Existing CLI, MCP, Evidence, and provider code was not rewritten.
-
-## Original and final architecture
-
-Original: CLI/MCP → composition → application → engine adapters, with Evidence
-as the result contract. Documented in `docs/architecture.mermaid`.
-
-Final: the same stack, plus `src/domain/*investigation*` and
-`src/application/investigationProject/*` for project persistence and a static
-workflow. See [ARCHITECTURE.md](ARCHITECTURE.md).
-
-## Implemented features
-
-| Feature | Status |
+| Item | Value |
 | --- | --- |
-| Project init / import / inspect / analyze / report / resume / status | Implemented and verified by tests |
-| Format registry | Implemented and verified |
-| Backend probe | Implemented and verified (angr unavailable) |
-| Optional AI interface | Implemented; live HTTP not tested |
-| Plugin metadata validation | Implemented and verified |
-| Investigation reports | Implemented and verified |
-| Dynamic execution in project workflow | Intentionally unsupported |
+| This repository | https://github.com/niravcse006/ai-reverse-engineering |
+| Starting HEAD before this increment | `092a2aa` |
+| Imported snapshot | `17ceb77ca5f2632faab8de01da4babff680eac48` |
+| Upstream reference | `d3ecf6800015f2183a298d78ffb30a266a9efd2a` (temporary tarball, not merged) |
+| Node used for tests | v22.23.4 (nvm) |
 
-## Integrated tools
-
-- Built-in static inspection (always)
-- Existing optional backends remain available through original commands
-- No new external engine was vendored
-- angr, FLOSS, RetDec, and MobSF were not integrated
-
-## New or updated files
-
-New source:
-
-- `src/domain/investigationProject.ts`
-- `src/domain/formatRegistry.ts`
-- `src/domain/pluginContract.ts`
-- `src/domain/aiProviderContract.ts`
-- `src/domain/investigationReport.ts`
-- `src/application/investigationProject/ProjectStore.ts`
-- `src/application/investigationProject/BackendProbe.ts`
-- `src/application/investigationProject/AiProvider.ts`
-- `src/application/investigationProject/Workflow.ts`
-- `src/application/investigationProject/ReportWriter.ts`
-- `src/cli/investigationProjectCommands.ts`
-- `src/cliInvestigationProject.test.ts`
-- colocated `*.test.ts` files for the modules above
-
-Updated:
-
-- `src/cli.ts`, `src/cliCommandNames.ts`
-- `README.md`, `CHANGELOG.md`, `.gitignore`
-- `docs/cli.md`, `docs/installation.md`, `docs/testing.md`, `docs/roadmap.md`
-
-New docs and examples listed in the README documentation section.
-
-## Test commands and actual results
-
-Environment: nvm Node v22.23.4, npm 10.9.9, macOS darwin 25.5.0.
+Baseline source tests before edits (18 passed):
 
 ```text
-npm install --ignore-scripts
-# added 730 packages, audited 731 packages in 16s
-# found 0 vulnerabilities
-```
-
-```text
-npx vitest run --project domain --project services \
-  src/domain/formatRegistry.test.ts \
-  src/domain/investigationProject.test.ts \
-  src/domain/pluginContract.test.ts \
+npm run test:local -- src/domain/formatRegistry.test.ts \
   src/domain/aiProviderContract.test.ts \
   src/domain/investigationReport.test.ts \
-  src/application/investigationProject/Workflow.test.ts
-# Test Files  6 passed (6)
-# Tests  21 passed (21)
-# Duration  574ms
+  src/domain/investigationProject.test.ts \
+  src/application/investigationProject/Workflow.test.ts \
+  src/cliInvestigationProject.test.ts
 ```
+
+Working tree was clean. User files were not discarded.
+
+## 2. Verified issues found
+
+- Upstream `main` is 8 commits ahead of the snapshot. Guidance, environment
+  varied writes, BinarySession cancellation, and two native fixes are absent.
+- `analyze-project` did not name remaining commands when Ghidra/IDA were missing.
+- Reports omitted Node/OS provenance and AI send disclosure.
+- Duplicate imports created new target ids.
+- Completed jobs were not reused when cache keys still matched.
+- `REA_AI_SPENDING_LIMIT_USD=0` was recorded but did not stop a send.
+- ADB screencap accepted a weaker PNG dimension parse than upstream `f7cd4e5`.
+- Package name remains `rea-agents` / `io.github.morluto/rea` (unsafe to rename
+  without a migration).
+
+## 3. Changes implemented
+
+| Path | Change |
+| --- | --- |
+| `src/adb/AdbProvider.ts` | Validate screencap with `readPngHeaderDimensions` |
+| `src/application/investigationProject/RemainingWorkflows.ts` | Capability-based remaining commands |
+| `src/application/investigationProject/Workflow.ts` | Disclosure, provenance, job reuse |
+| `src/application/investigationProject/ProjectStore.ts` | Duplicate targets; reusable jobs |
+| `src/application/investigationProject/AiProvider.ts` | Refuse spend limit 0 before fetch |
+| `src/domain/aiProviderContract.ts` | `createAiDisclosure` (host only) |
+| `src/domain/investigationReport.ts` | Remaining workflows, provenance, disclosure |
+| Tests listed below | Added/updated |
+| `docs/UPSTREAM_COMPARISON.md`, `FEATURE_PARITY.md`, `IMPLEMENTATION_PLAN.md` | Audit |
+| `docs/PRIVACY.md`, `INVESTIGATION_PROJECTS.md`, `REPORTING.md`, `SUPPORTED_FORMATS.md` | Behavior docs |
+
+## 4. Upstream features
+
+| Outcome | Items |
+| --- | --- |
+| Preserved | CLI/MCP/Evidence/providers from the 6.8.0 snapshot |
+| Ported | ADB PNG header validation (`f7cd4e5`) |
+| Intentionally excluded for now | Guidance search, environment varied writes, BinarySession and native follow-ups (large, need their tests) |
+
+## 5. Fork-specific features
+
+Investigation projects, reports, remaining-workflow text, AI disclosure,
+duplicate/cache reuse. Not claimed as better than upstream `main`.
+
+## 6. Security and privacy
+
+- No auto-exec in `analyze-project` (unchanged, re-tested).
+- AI disclosure without keys or query tokens.
+- Spend limit 0 refuses HTTP.
+- [PRIVACY.md](PRIVACY.md) describes actual transmission.
+
+## 7. Tests executed
+
+After implementation:
 
 ```text
-npx vitest run --project adapters src/cliInvestigationProject.test.ts
-# Test Files  1 passed (1)
-# Tests  1 passed (1)
-# Duration  13.02s
+npm run test:local -- \
+  src/domain/aiProviderContract.test.ts \
+  src/domain/investigationReport.test.ts \
+  src/application/investigationProject/Workflow.test.ts \
+  src/application/investigationProject/RemainingWorkflows.test.ts \
+  src/cliInvestigationProject.test.ts
 ```
 
-Not executed: `npm test`, `npm run check`, real Ghidra/Hopper/Frida lanes,
-live AI HTTP calls. Those absences are failures to verify, not claimed passes.
+Result: **5 files, 15 tests, all passed** (Node v22.23.4).
 
-## Benchmark results
+Also passed in the same session: `formatRegistry` (5), `investigationProject` (3),
+`pngHeader` (16). Combined investigation-related source tests in this session
+were green.
 
-None beyond the Vitest durations above. See [BENCHMARKS.md](BENCHMARKS.md).
+## 8. Remaining failures and blockers
 
-## Security checks
+- Full `npm test` / `check:pr`: not run.
+- `AdbProvider.test.ts`: not re-run (POSIX stub suite; Windows skipped by design).
+- No Ghidra/IDA/Hopper/JADX/Frida in this environment.
+- No live `REA_AI_*` HTTP call.
+- Guidance / environment-write / BinarySession / native bookmark+dispatch still missing.
 
-- Empty files cannot be imported
-- Plugin entries cannot traverse directories
-- AI responses that claim exploitability are rejected
-- Project reports stay under the project root
-- No API keys were added to the tree
-- `.env` is gitignored; `.env.example` has placeholders only
+## 9. Limitations
 
-## Known issues
+- Project analysis is header/hash/string only.
+- Reconstruction drafts are not produced by `analyze-project`.
+- Package identity still matches upstream’s npm/MCP names on purpose.
 
-- Local git history does not include upstream commits; the tree came from the
-  GitHub archive because `git clone` could not write hooks outside the first
-  sandbox attempt.
-- Product catalogs still describe the upstream CLI inventory until compile +
-  generators run.
-- Default system Node 18 is below `engines`.
-- Ghidra, rizin, and radare2 were not installed here.
+## 10. Future work
 
-## Deferred features
-
-angr, FLOSS, RetDec, MobSF, plugin code loading, live AI provider certification,
-and catalog regeneration. See [roadmap.md](roadmap.md).
-
-## Installation instructions
-
-1. `nvm use 22.23.4` or Node 24.22.1
-2. `cd /Users/niravsoni/Projects/rea && npm install`
-3. Use investigation commands from this checkout (see
-   [CLI_REFERENCE.md](CLI_REFERENCE.md)) or `npx rea-agents setup` for the
-   original agent MCP flow
-4. Copy `.env.example` to `.env` only if you need AI or provider paths
-
-## Recommended next steps
-
-1. Run `npm run compile` and regenerate catalogs if you want docs/CI checks
-   that digest `CLI_COMMAND_NAMES` to pass.
-2. Run `npm run test:fast` for a broader source baseline.
-3. Create a git commit and remote when you want this working copy published.
-4. Add a licensed Ghidra/Hopper install before claiming deep decompilation
-   works on this machine.
+1. Port remaining 7 upstream commits with their tests.
+2. Attach existing inspect/decompile Evidence ids to jobs.
+3. Run `check:pr` and one real-provider lane on a machine that has those tools.
+4. Decide a scoped npm/MCP rename only after a written migration.

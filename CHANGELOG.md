@@ -4,14 +4,22 @@
 
 ### Added
 
+- Investigation reports now record remaining usable commands, Node/platform provenance, and an AI disclosure object without API keys.
+- Duplicate imported targets reuse the existing target id. Completed jobs with the same cache key are reused.
 - Local investigation projects that persist targets, jobs, backend probes, and Markdown/JSON reports (`init-project`, `import-target`, `inspect-target`, `analyze-project`, `generate-report`, `resume-job`, `project-status`, `list-plugins`).
 - Built-in format registry coverage for ELF, PE, Mach-O, ZIP families, WASM, DEX, JavaScript, and TypeScript, with explicit unsupported/empty diagnostics.
 - Optional AI provider interface (`REA_AI_*`) that treats target content as untrusted data and refuses exploitability claims.
 - Plugin manifest validation without loading or executing plugin code.
 - Assessment, research, architecture, security, and implementation documentation under `docs/`.
 
+### Fixed
+
+- ADB screencap now validates PNG signature and IHDR via `readPngHeaderDimensions` (upstream `f7cd4e5`).
+- `REA_AI_SPENDING_LIMIT_USD=0` refuses the HTTP request before a key or fetch is used.
+
 ### Compatibility
 
+- Package name remains `rea-agents` and `mcpName` remains `io.github.morluto/rea`. A rename is a future breaking change; see `docs/IMPLEMENTATION_PLAN.md`.
 - Existing REA CLI, MCP, Evidence, and provider commands are unchanged. The new commands are additive.
 - Product catalogs and generated skill metadata still reflect the upstream 6.8.0 inventory until those generators are rerun after a full compile.
 

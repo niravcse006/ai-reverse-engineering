@@ -73,6 +73,44 @@ export const aiInterpretationSchema = z.object({
 
 export type AiInterpretation = z.infer<typeof aiInterpretationSchema>;
 
+export const aiDisclosureSchema = z.object({
+  attempted: z.boolean(),
+  operator_authorized: z.boolean(),
+  provider: z.enum(AI_PROVIDER_IDS),
+  model: z.string().min(1).nullable(),
+  endpoint_host: z.string().min(1).nullable(),
+  bytes_offered: z.number().int().nonnegative(),
+  reason: z.string().min(1),
+});
+
+export type AiDisclosure = z.infer<typeof aiDisclosureSchema>;
+
+const endpointHost = (endpoint: string | null): string | null => {
+  if (endpoint === null) return null;
+  try {
+    return new URL(endpoint).host;
+  } catch {
+    return "unparsed";
+  }
+};
+
+/** Record what would leave the machine. Never includes API keys. */
+export const createAiDisclosure = (input: {
+  readonly settings: AiProviderSettings;
+  readonly bytesOffered: number;
+  readonly operatorAuthorized: boolean;
+  readonly reason: string;
+  readonly attempted?: boolean;
+}): AiDisclosure => ({
+  attempted: input.attempted ?? false,
+  operator_authorized: input.operatorAuthorized,
+  provider: input.settings.provider,
+  model: input.settings.model,
+  endpoint_host: endpointHost(input.settings.endpoint),
+  bytes_offered: input.bytesOffered,
+  reason: input.reason,
+});
+
 const EXPLOIT_CLAIM = /\b(exploit(?:able|ability)?|weaponiz|rce|0-day)\b/iu;
 
 /**
