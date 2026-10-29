@@ -16,18 +16,27 @@ and its original receipt JSON remain documentation, checked by the report produc
 Use source feedback while editing, explicit boundary checks for the changed
 behavior, and complete CI evidence before merging.
 
-Investigation-project tests added in this working copy (verified 2026-10-29):
+Investigation-project tests in this working copy (prefer `npm run test:local`):
 
 ```bash
-npx vitest run --project domain --project services \
+npm run test:local -- \
+  src/application/investigationProject/Workflow.test.ts \
+  src/application/investigationProject/RemainingWorkflows.test.ts \
   src/domain/formatRegistry.test.ts \
-  src/domain/investigationProject.test.ts \
-  src/domain/pluginContract.test.ts \
   src/domain/aiProviderContract.test.ts \
   src/domain/investigationReport.test.ts \
-  src/application/investigationProject/Workflow.test.ts
-npx vitest run --project adapters src/cliInvestigationProject.test.ts
+  src/domain/investigationProject.test.ts \
+  src/domain/pluginContract.test.ts \
+  src/domain/pngHeader.test.ts \
+  src/cliInvestigationProject.test.ts
 ```
+
+Those tests do **not** require Ghidra, IDA, Hopper, JADX, Frida, or a live AI
+endpoint. Real-provider lanes remain in the table below and in
+[real-toolchain verification lanes](#real-toolchain-verification-lanes).
+`npm run test:mcp` exercises upstream MCP contracts, not the investigation-project
+CLI. `npm run upstream:drift` reports unported `morluto/rea` commits and does
+not merge them.
 
 | Command                           | Scope                                                                                                                   |
 | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |

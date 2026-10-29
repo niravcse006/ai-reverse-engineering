@@ -13,6 +13,8 @@ import {
 } from "../../domain/pluginContract.js";
 import {
   INVESTIGATION_WORKFLOW_VERSION,
+  createPendingStages,
+  isResumableJobStatus,
   type InvestigationFinding,
   type InvestigationJob,
   type InvestigationProject,
@@ -43,6 +45,7 @@ import {
   investigationProjectPaths,
   loadInvestigationJob,
   loadInvestigationProject,
+  readLocalFilePrefix,
   saveInvestigationJob,
 } from "./ProjectStore.js";
 import { remainingWorkflowsFor } from "./RemainingWorkflows.js";
@@ -108,9 +111,10 @@ const detectTargetFormat = async (
       ? ok(detected.value)
       : err(inputError("detect_format", detected.error));
   }
-  const handle = await readFile(resolved);
+  const prefix = await readLocalFilePrefix(resolved, MAX_PROBE_BYTES);
+  if (!prefix.ok) return prefix;
   const detected = detectRegisteredFormat({
-    bytes: handle.subarray(0, MAX_PROBE_BYTES),
+    bytes: prefix.value,
     fileName: basename(resolved),
     fileSize: info.size,
     hostArchitecture: process.arch,
@@ -136,6 +140,9 @@ const collectStaticFindings = async (
       evidence_ids: ["ev_format"],
       details: format.diagnostic,
       verified: format.confidence === "observed",
+      target_id: target.target_id,
+      target_sha256: target.sha256,
+      provider: "builtin-static",
     },
   ];
   if (format.architecture !== null) {
@@ -147,6 +154,9 @@ const collectStaticFindings = async (
       evidence_ids: ["ev_arch"],
       details: `Header parsing recovered architecture ${format.architecture}.`,
       verified: true,
+      target_id: target.target_id,
+      target_sha256: target.sha256,
+      provider: "builtin-static",
     });
   }
   const limitations = [
@@ -156,25 +166,28 @@ const collectStaticFindings = async (
   if (!format.supported)
     limitations.push("The detected format is unsupported or empty.");
   if (target.size_bytes > 0 && format.format !== "source-repository") {
-    const bytes = await readFile(resolve(target.path));
-    const strings = extractPrintableStrings(
-      bytes.subarray(0, Math.min(bytes.length, MAX_STRING_SCAN_BYTES)),
-    );
-    if (strings.length > 0) {
-      findings.push({
-        finding_id: "ev_strings",
-        title: "Printable strings",
-        kind: "string",
-        confidence: "observed",
-        evidence_ids: ["ev_strings"],
-        details: strings.slice(0, 32).join("\n"),
-        verified: true,
-      });
+    const prefix = await readLocalFilePrefix(target.path, MAX_STRING_SCAN_BYTES);
+    if (prefix.ok) {
+      const strings = extractPrintableStrings(prefix.value);
+      if (strings.length > 0) {
+        findings.push({
+          finding_id: "ev_strings",
+          title: "Printable strings",
+          kind: "string",
+          confidence: "observed",
+          evidence_ids: ["ev_strings"],
+          details: strings.slice(0, 32).join("\n"),
+          verified: true,
+          target_id: target.target_id,
+          target_sha256: target.sha256,
+          provider: "builtin-static",
+        });
+      }
+      if (target.size_bytes > MAX_STRING_SCAN_BYTES)
+        limitations.push(
+          `String extraction scanned the first ${String(MAX_STRING_SCAN_BYTES)} bytes only.`,
+        );
     }
-    if (bytes.length > MAX_STRING_SCAN_BYTES)
-      limitations.push(
-        `String extraction scanned the first ${String(MAX_STRING_SCAN_BYTES)} bytes only.`,
-      );
   }
   return { findings, limitations };
 };
@@ -241,6 +254,7 @@ export const runInvestigationWorkflow = async (
   targetId: string,
   options: {
     readonly resumeJobId?: string;
+    readonly regenerateReport?: boolean;
     readonly authorizeDynamic?: boolean;
     readonly environment?: Readonly<Record<string, string | undefined>>;
     readonly signal?: AbortSignal;
@@ -252,6 +266,28 @@ export const runInvestigationWorkflow = async (
   if (target === undefined)
     return err(inputError("analyze_project", `Unknown target ${targetId}.`));
   const environment = options.environment ?? process.env;
+  if (options.signal?.aborted) {
+    const interrupted = {
+      ...createInvestigationJob(target, {
+        ...project.value.config,
+        authorize_dynamic:
+          options.authorizeDynamic ?? project.value.config.authorize_dynamic,
+      }),
+      status: "interrupted" as const,
+      error: "Investigation was cancelled.",
+    };
+    await saveInvestigationJob(projectRoot, interrupted);
+    return err(inputError("analyze_project", "Investigation was cancelled."));
+  }
+  const currentHash = await hashLocalFile(target.path, options.signal);
+  if (!currentHash.ok) return currentHash;
+  if (currentHash.value.sha256 !== target.sha256)
+    return err(
+      inputError(
+        "hash_target",
+        "Target contents changed after import. Re-import the file to analyze the new bytes.",
+      ),
+    );
   let job: InvestigationJob;
   if (options.resumeJobId === undefined) {
     const candidate = createInvestigationJob(target, {
@@ -282,6 +318,43 @@ export const runInvestigationWorkflow = async (
     const resumed = await loadInvestigationJob(projectRoot, options.resumeJobId);
     if (!resumed.ok) return resumed;
     job = resumed.value;
+    if (job.status === "completed" && options.regenerateReport !== true) {
+      const format = await detectTargetFormat(target.path);
+      if (!format.ok)
+        return err(inputError("analyze_project", format.error.userMessage ?? format.error.message));
+      return ok({
+        project: project.value,
+        target,
+        job,
+        format: format.value,
+        backends: await probeAnalysisBackends(environment),
+        report: null,
+        plugins: await loadPlugins(projectRoot),
+        reused_job: true,
+      });
+    }
+    if (job.status === "cancelled")
+      return err(inputError("resume_job", "Cancelled jobs cannot be resumed."));
+    if (job.status === "completed" && options.regenerateReport === true) {
+      const format = await detectTargetFormat(target.path);
+      if (!format.ok)
+        return err(inputError("analyze_project", format.error.userMessage ?? format.error.message));
+      const backends = await probeAnalysisBackends(environment);
+      return writeCompletedReports(projectRoot, project.value, target, job, format.value, backends);
+    }
+    if (!isResumableJobStatus(job.status))
+      return err(
+        inputError("resume_job", `Job ${job.job_id} is ${job.status} and is not resumable.`),
+      );
+    job = {
+      ...job,
+      status: "queued",
+      findings: [],
+      limitations: [],
+      error: undefined,
+      stages: createPendingStages(),
+      report_paths: {},
+    };
   }
   const fail = async (
     stage: InvestigationStageId,
@@ -413,21 +486,44 @@ export const runInvestigationWorkflow = async (
       .filter((workflow) => !workflow.usable)
       .map((workflow) => `${workflow.command}: ${workflow.reason}`),
   );
+  return persistCompletedInvestigation({
+    projectRoot,
+    project: project.value,
+    target,
+    job,
+    format: format.value,
+    backends,
+    ai,
+    aiDisclosure,
+  });
+};
+
+const persistCompletedInvestigation = async (input: {
+  readonly projectRoot: string;
+  readonly project: InvestigationProject;
+  readonly target: InvestigationTarget;
+  readonly job: InvestigationJob;
+  readonly format: FormatDetection;
+  readonly backends: readonly BackendAvailability[];
+  readonly ai: AiInterpretation | null;
+  readonly aiDisclosure: AiDisclosure;
+}): Promise<Result<InvestigationWorkflowResult, AnalysisInputError>> => {
+  const remaining = remainingWorkflowsFor(input.format.format, input.backends);
   const report: InvestigationReport = {
     schema: "rea.investigation-report.v1",
     generated_at: new Date().toISOString(),
-    project_name: project.value.name,
-    job,
+    project_name: input.project.name,
+    job: input.job,
     target: {
-      target_id: target.target_id,
-      display_name: target.display_name,
-      sha256: target.sha256,
-      format: target.format,
-      architecture: target.architecture,
-      size_bytes: target.size_bytes,
+      target_id: input.target.target_id,
+      display_name: input.target.display_name,
+      sha256: input.target.sha256,
+      format: input.target.format,
+      architecture: input.target.architecture,
+      size_bytes: input.target.size_bytes,
     },
-    format: format.value,
-    backends: backends.map((backend) => ({
+    format: input.format,
+    backends: input.backends.map((backend) => ({
       id: backend.id,
       available: backend.available,
       reason: backend.reason,
@@ -439,18 +535,18 @@ export const runInvestigationWorkflow = async (
       arch: process.arch,
       workflow_version: INVESTIGATION_WORKFLOW_VERSION,
     },
-    findings: job.findings,
-    ai,
-    ai_disclosure: aiDisclosure,
-    limitations: job.limitations,
+    findings: input.job.findings,
+    ai: input.ai,
+    ai_disclosure: input.aiDisclosure,
+    limitations: input.job.limitations,
   };
-  const reportsDir = investigationProjectPaths(projectRoot).reports;
+  const reportsDir = investigationProjectPaths(input.projectRoot).reports;
   const reportPaths = {
-    json: join(reportsDir, `${job.job_id}.json`),
-    markdown: join(reportsDir, `${job.job_id}.md`),
+    json: join(reportsDir, `${input.job.job_id}.json`),
+    markdown: join(reportsDir, `${input.job.job_id}.md`),
   };
-  job = {
-    ...updateStage(job, "generate_report", "completed", {
+  let job: InvestigationJob = {
+    ...updateStage(input.job, "generate_report", "completed", {
       summary: reportPaths.markdown,
     }),
     report_paths: reportPaths,
@@ -460,27 +556,59 @@ export const runInvestigationWorkflow = async (
     summary: job.job_id,
   });
   const completedReport = { ...report, job };
-  const written = await writeInvestigationReports(projectRoot, job.job_id, {
+  const written = await writeInvestigationReports(input.projectRoot, job.job_id, {
     json: renderInvestigationReportJson(completedReport),
     markdown: renderInvestigationReportMarkdown(completedReport),
   });
-  if (!written.ok) return fail("generate_report", written.error.userMessage ?? written.error.message, {
-    format: format.value,
-    backends,
-    report: completedReport,
-  });
-  const persisted = await saveInvestigationJob(projectRoot, job);
+  if (!written.ok) {
+    const failed = {
+      ...job,
+      status: "failed" as const,
+      error: written.error.userMessage ?? written.error.message,
+    };
+    await saveInvestigationJob(input.projectRoot, failed);
+    return err(
+      inputError("generate_report", written.error.userMessage ?? written.error.message),
+    );
+  }
+  const persisted = await saveInvestigationJob(input.projectRoot, job);
   if (!persisted.ok) return persisted;
-  const reloaded = await loadInvestigationProject(projectRoot);
+  const reloaded = await loadInvestigationProject(input.projectRoot);
   if (!reloaded.ok) return reloaded;
   return ok({
     project: reloaded.value,
-    target,
+    target: input.target,
     job: persisted.value,
-    format: format.value,
-    backends,
+    format: input.format,
+    backends: input.backends,
     report: { ...completedReport, job: persisted.value },
-    plugins: await loadPlugins(projectRoot),
+    plugins: await loadPlugins(input.projectRoot),
+  });
+};
+
+const writeCompletedReports = async (
+  projectRoot: string,
+  project: InvestigationProject,
+  target: InvestigationTarget,
+  job: InvestigationJob,
+  format: FormatDetection,
+  backends: readonly BackendAvailability[],
+): Promise<Result<InvestigationWorkflowResult, AnalysisInputError>> => {
+  const aiStatus = aiProviderStatus();
+  return persistCompletedInvestigation({
+    projectRoot,
+    project,
+    target,
+    job,
+    format,
+    backends,
+    ai: null,
+    aiDisclosure: createAiDisclosure({
+      settings: aiStatus.settings,
+      bytesOffered: 0,
+      operatorAuthorized: false,
+      reason: "Report regenerated from stored findings. No new AI request was sent.",
+    }),
   });
 };
 

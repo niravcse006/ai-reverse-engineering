@@ -68,4 +68,17 @@ it("exposes investigation-project commands and completes a static workflow", asy
   expect(analyzed.parsed).toMatchObject({
     job: { status: "completed" },
   });
+
+  const status = await runCli(["project-status", "--project", root, "--json"]);
+  expect(status.parsed).toMatchObject({
+    project: { name: "cli-demo" },
+  });
+  expect(
+    (status.parsed as { jobs: { status: string }[] }).jobs.some(
+      (job) => job.status === "completed",
+    ),
+  ).toBe(true);
+
+  const plugins = await runCli(["list-plugins", "--project", root, "--json"]);
+  expect(plugins.parsed).toMatchObject({ plugins: [] });
 });

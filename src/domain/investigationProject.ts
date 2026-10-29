@@ -91,6 +91,9 @@ export const investigationFindingSchema = z.object({
   evidence_ids: z.array(z.string().min(1)),
   details: z.string().min(1),
   verified: z.boolean(),
+  target_id: z.string().min(1).optional(),
+  target_sha256: z.string().regex(/^[0-9a-f]{64}$/u).optional(),
+  provider: z.string().min(1).optional(),
 });
 
 export type InvestigationFinding = z.infer<typeof investigationFindingSchema>;
@@ -161,11 +164,27 @@ export const defaultInvestigationProjectConfig =
 export const parseInvestigationProject = (
   value: unknown,
 ): Result<InvestigationProject, string> => {
+  if (value !== null && typeof value === "object" && "version" in value) {
+    const version = (value as { readonly version: unknown }).version;
+    if (version !== INVESTIGATION_PROJECT_VERSION)
+      return err(
+        `Unsupported project schema version ${String(version)}. This tool reads version ${String(INVESTIGATION_PROJECT_VERSION)}.`,
+      );
+  }
   const parsed = investigationProjectSchema.safeParse(value);
   return parsed.success
     ? ok(parsed.data)
     : err(parsed.error.issues.map((issue) => issue.message).join("; "));
 };
+
+/** True when resume-job may re-run analysis for this status. */
+export const isResumableJobStatus = (
+  status: InvestigationJobStatus,
+): boolean =>
+  status === "failed" ||
+  status === "interrupted" ||
+  status === "queued" ||
+  status === "running";
 
 /** Parse a persisted job document without performing I/O. */
 export const parseInvestigationJob = (

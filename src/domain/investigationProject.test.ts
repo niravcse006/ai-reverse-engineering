@@ -35,7 +35,10 @@ describe("investigation project model", () => {
   });
 
   it("rejects a malformed project document", () => {
-    expect(parseInvestigationProject({ version: 2 }).ok).toBe(false);
+    const unsupported = parseInvestigationProject({ version: 2 });
+    expect(unsupported.ok).toBe(false);
+    if (!unsupported.ok)
+      expect(unsupported.error).toContain("Unsupported project schema version 2");
     expect(
       parseInvestigationProject({
         version: INVESTIGATION_PROJECT_VERSION,

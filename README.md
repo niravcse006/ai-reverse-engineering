@@ -157,17 +157,23 @@ Domain code does not launch engines or call the network. Missing optional backen
 
 This repository is a working copy of REA 6.8.0 plus a local investigation-project
 layer. It is **not** claimed to be better than [morluto/rea](https://github.com/morluto/rea).
-On 2026-10-29 upstream `main` was 8 commits ahead of the imported snapshot.
+The pinned snapshot is `17ceb77`. Source-based status: [docs/UPSTREAM_PARITY.md](docs/UPSTREAM_PARITY.md).
+Security findings: [docs/SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md). Latest recorded
+results: [docs/FINAL_AUDIT.md](docs/FINAL_AUDIT.md).
 
-The scorecard is [docs/VERIFICATION_CHECKLIST.md](docs/VERIFICATION_CHECKLIST.md).
-Comparison notes: [docs/UPSTREAM_COMPARISON.md](docs/UPSTREAM_COMPARISON.md),
-[docs/FEATURE_PARITY.md](docs/FEATURE_PARITY.md). This tree is still behind
-upstream `main` on guidance, environment writes, and some native/session fixes.
-New engines or a longer feature list are not next.
+```bash
+npm run test:local -- src/application/investigationProject/Workflow.test.ts
+npm run check:fast
+npm run upstream:drift
+```
+
+Real Ghidra, IDA, Hopper, JADX, and Frida lanes need those tools installed. See
+[docs/testing.md](docs/testing.md).
 
 ## Documentation
 
-- [Verification checklist](docs/VERIFICATION_CHECKLIST.md)
+- [Final audit](docs/FINAL_AUDIT.md), [upstream parity](docs/UPSTREAM_PARITY.md), [security audit](docs/SECURITY_AUDIT.md)
+- [Verification checklist](docs/VERIFICATION_CHECKLIST.md), [testing](docs/testing.md)
 - [Upstream comparison](docs/UPSTREAM_COMPARISON.md), [feature parity](docs/FEATURE_PARITY.md), [implementation plan](docs/IMPLEMENTATION_PLAN.md)
 - [Investigation projects](docs/INVESTIGATION_PROJECTS.md), [reporting](docs/REPORTING.md), [supported formats](docs/SUPPORTED_FORMATS.md), [privacy](docs/PRIVACY.md)
 - [Installation and agent setup](docs/installation.md)

@@ -114,6 +114,7 @@
   "scripts": {
     "release:notes": "node scripts/release-notes.mjs",
     "deps:check": "node scripts/check-dependency-install.mjs",
+    "upstream:drift": "node scripts/report-upstream-drift.mjs",
     "metadata:generate": "node scripts/run-exclusive.mjs artifacts node scripts/generate-package-metadata.mjs",
     "metadata:check": "node scripts/generate-package-metadata.mjs --check",
     "mcp-registry:check": "node scripts/verify-mcp-registry-metadata.mjs",

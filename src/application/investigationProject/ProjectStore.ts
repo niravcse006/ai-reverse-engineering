@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
-import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
+import { createReadStream } from "node:fs";
+import { mkdir, open, readFile, readdir, stat } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 
 import writeFileAtomic from "write-file-atomic";
@@ -143,7 +144,15 @@ export const hashLocalFile = async (
   let info;
   try {
     info = await stat(resolved);
-  } catch {
+  } catch (cause) {
+    const code =
+      cause !== null && typeof cause === "object" && "code" in cause
+        ? String((cause as { code: unknown }).code)
+        : undefined;
+    if (code === "EACCES")
+      return err(
+        inputError("import_target", `Permission denied: ${resolved}`, ["path"]),
+      );
     return err(inputError("import_target", `Target does not exist: ${resolved}`, ["path"]));
   }
   if (!info.isFile() && !info.isDirectory())
@@ -152,18 +161,80 @@ export const hashLocalFile = async (
     );
   if (info.isDirectory()) {
     const digest = createHash("sha256");
-    digest.update(`directory:${resolved}:${String(info.mtimeMs)}`);
+    digest.update("directory\n");
+    let names: string[] = [];
+    try {
+      names = (await readdir(resolved)).toSorted((left, right) =>
+        left.localeCompare(right),
+      );
+    } catch (cause) {
+      const code =
+        cause !== null && typeof cause === "object" && "code" in cause
+          ? String((cause as { code: unknown }).code)
+          : undefined;
+      if (code === "EACCES")
+        return err(
+          inputError("import_target", `Permission denied: ${resolved}`, ["path"]),
+        );
+      return err(inputError("import_target", `Target does not exist: ${resolved}`, ["path"]));
+    }
+    for (const name of names.slice(0, 512)) digest.update(`${name}\n`);
+    if (names.length > 512) digest.update(`truncated:${String(names.length)}\n`);
     return ok({ sha256: digest.digest("hex"), sizeBytes: 0 });
   }
   if (info.size === 0)
     return err(inputError("import_target", "Empty files cannot be imported.", ["path"]));
-  const bytes = await readFile(resolved);
   if (signal?.aborted)
     return err(inputError("import_target", "Import was cancelled.", ["path"]));
-  return ok({
-    sha256: createHash("sha256").update(bytes).digest("hex"),
-    sizeBytes: info.size,
-  });
+  try {
+    const digest = createHash("sha256");
+    const stream = createReadStream(resolved, signal === undefined ? {} : { signal });
+    for await (const chunk of stream) {
+      if (signal?.aborted)
+        return err(inputError("import_target", "Import was cancelled.", ["path"]));
+      digest.update(chunk as Buffer);
+    }
+    return ok({ sha256: digest.digest("hex"), sizeBytes: info.size });
+  } catch (cause) {
+    const code =
+      cause !== null && typeof cause === "object" && "code" in cause
+        ? String((cause as { code: unknown }).code)
+        : undefined;
+    if (code === "EACCES")
+      return err(
+        inputError("import_target", `Permission denied: ${resolved}`, ["path"]),
+      );
+    if (signal?.aborted)
+      return err(inputError("import_target", "Import was cancelled.", ["path"]));
+    return err(inputError("import_target", `Unable to read target: ${resolved}`, ["path"]));
+  }
+};
+
+/** Read a bounded prefix without loading the rest of the file. */
+export const readLocalFilePrefix = async (
+  path: string,
+  maxBytes: number,
+): Promise<Result<Buffer, AnalysisInputError>> => {
+  const resolved = resolve(path);
+  let handle;
+  try {
+    handle = await open(resolved, "r");
+  } catch (cause) {
+    const code =
+      cause !== null && typeof cause === "object" && "code" in cause
+        ? String((cause as { code: unknown }).code)
+        : undefined;
+    if (code === "EACCES")
+      return err(inputError("inspect_target", `Permission denied: ${resolved}`, ["path"]));
+    return err(inputError("inspect_target", `Target does not exist: ${resolved}`, ["path"]));
+  }
+  try {
+    const buffer = Buffer.alloc(Math.max(0, maxBytes));
+    const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
+    return ok(buffer.subarray(0, bytesRead));
+  } finally {
+    await handle.close();
+  }
 };
 
 export const addProjectTarget = async (
@@ -186,11 +257,16 @@ export const addProjectTarget = async (
     targets: [...loaded.value.targets, imported],
   });
   if (!project.ok) return project;
-  await writeFile(
-    join(investigationProjectPaths(root).targets, `${imported.target_id}.json`),
-    `${JSON.stringify(imported, null, 2)}\n`,
-    { encoding: "utf8", mode: 0o600 },
+  const sidecar = join(
+    investigationProjectPaths(root).targets,
+    `${imported.target_id}.json`,
   );
+  if (!isPathWithinRoot(investigationProjectPaths(root).targets, sidecar))
+    return err(inputError("import_target", "Target path escaped the project root.", ["path"]));
+  await writeFileAtomic(sidecar, `${JSON.stringify(imported, null, 2)}\n`, {
+    encoding: "utf8",
+    mode: 0o600,
+  });
   return ok(imported);
 };
 
@@ -201,6 +277,8 @@ export const saveInvestigationJob = async (
   const loaded = await loadInvestigationProject(root);
   if (!loaded.ok) return loaded;
   const paths = investigationProjectPaths(root);
+  if (!/^[A-Za-z0-9_]+$/u.test(job.job_id))
+    return err(inputError("persist_job", "Job id contains unsupported characters.", ["job_id"]));
   if (!isPathWithinRoot(paths.jobs, join(paths.jobs, `${job.job_id}.json`)))
     return err(inputError("persist_job", "Job path escaped the project root.", ["job_id"]));
   await writeFileAtomic(
@@ -227,6 +305,8 @@ export const loadInvestigationJob = async (
   root: string,
   jobId: string,
 ): Promise<Result<InvestigationJob, AnalysisInputError>> => {
+  if (!/^[A-Za-z0-9_]+$/u.test(jobId))
+    return err(inputError("resume_job", "Job id contains unsupported characters.", ["job_id"]));
   const paths = investigationProjectPaths(root);
   const jobPath = join(paths.jobs, `${jobId}.json`);
   if (!isPathWithinRoot(paths.jobs, jobPath))

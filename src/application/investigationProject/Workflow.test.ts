@@ -52,10 +52,29 @@ describe("investigation project workflow", () => {
       await readFile(analyzed.value.job.report_paths.json ?? "", "utf8"),
     ) as { job: { status: string } };
     expect(storedReport.job.status).toBe("completed");
+    expect(
+      analyzed.value.job.findings.every(
+        (finding) =>
+          finding.target_id === imported.value.target.target_id &&
+          finding.target_sha256 === imported.value.target.sha256 &&
+          finding.provider === "builtin-static",
+      ),
+    ).toBe(true);
     const again = await runInvestigationWorkflow(root, imported.value.target.target_id, {
       environment: {},
     });
     expect(again.ok && again.value.reused_job).toBe(true);
+    const regenerated = await runInvestigationWorkflow(root, imported.value.target.target_id, {
+      resumeJobId: analyzed.value.job.job_id,
+      regenerateReport: true,
+      environment: {},
+    });
+    expect(regenerated.ok).toBe(true);
+    if (!regenerated.ok) throw new Error(regenerated.error.message);
+    expect(regenerated.value.job.job_id).toBe(analyzed.value.job.job_id);
+    expect(regenerated.value.job.findings.map((finding) => finding.finding_id)).toEqual(
+      analyzed.value.job.findings.map((finding) => finding.finding_id),
+    );
   });
 
   it("inspects a target without executing it and keeps empty files out of import", async () => {
@@ -130,5 +149,93 @@ describe("investigation project workflow", () => {
         trusted: false,
       }).ok,
     ).toBe(true);
+  });
+});
+
+describe("investigation project safety", () => {
+  it("refuses analysis after the imported bytes change", async () => {
+    const root = await projectRoot();
+    await createInvestigationProject(root, "stale");
+    const targetPath = join(root, "sample.so");
+    await writeFile(targetPath, Buffer.concat([elf(2, 1, 183), Buffer.from("HelloREA")]));
+    const imported = await importInvestigationTarget(root, targetPath);
+    expect(imported.ok).toBe(true);
+    if (!imported.ok) throw new Error(imported.error.message);
+    await writeFile(targetPath, Buffer.concat([elf(2, 1, 183), Buffer.from("Changed")]));
+    const analyzed = await runInvestigationWorkflow(root, imported.value.target.target_id, {
+      environment: {},
+    });
+    expect(analyzed.ok).toBe(false);
+    if (analyzed.ok) throw new Error("expected stale-hash refusal");
+    expect(analyzed.error.userMessage ?? analyzed.error.message).toContain(
+      "changed after import",
+    );
+  });
+
+  it("does not reuse a completed job after the imported bytes change", async () => {
+    const root = await projectRoot();
+    await createInvestigationProject(root, "reuse-stale");
+    const targetPath = join(root, "sample.so");
+    await writeFile(targetPath, Buffer.concat([elf(2, 1, 183), Buffer.from("HelloREA")]));
+    const imported = await importInvestigationTarget(root, targetPath);
+    expect(imported.ok).toBe(true);
+    if (!imported.ok) throw new Error(imported.error.message);
+    const first = await runInvestigationWorkflow(root, imported.value.target.target_id, {
+      environment: {},
+    });
+    expect(first.ok).toBe(true);
+    await writeFile(targetPath, Buffer.concat([elf(2, 1, 183), Buffer.from("Changed")]));
+    const second = await runInvestigationWorkflow(root, imported.value.target.target_id, {
+      environment: {},
+    });
+    expect(second.ok).toBe(false);
+    if (second.ok) throw new Error("expected stale-hash refusal after reuse");
+    expect(second.error.userMessage ?? second.error.message).toContain("changed after import");
+  });
+
+  it("classifies from bytes when the extension disagrees and accepts unicode names", async () => {
+    const root = await projectRoot();
+    await createInvestigationProject(root, "names");
+    const targetPath = join(root, "样本 notes.txt");
+    await writeFile(targetPath, Buffer.concat([elf(2, 1, 183), Buffer.from("HelloREA")]));
+    const imported = await importInvestigationTarget(root, targetPath);
+    expect(imported.ok).toBe(true);
+    if (!imported.ok) throw new Error(imported.error.message);
+    expect(imported.value.format.format).toBe("elf");
+    expect(imported.value.target.display_name).toContain("样本");
+  });
+
+  it("refuses a missing target and a path-escaping job id", async () => {
+    const root = await projectRoot();
+    await createInvestigationProject(root, "safety");
+    const missing = await importInvestigationTarget(root, join(root, "gone.bin"));
+    expect(missing.ok).toBe(false);
+    const { loadInvestigationJob } = await import("./ProjectStore.js");
+    const escaped = await loadInvestigationJob(root, "../project");
+    expect(escaped.ok).toBe(false);
+    if (escaped.ok) throw new Error("expected unsafe job id refusal");
+    expect(escaped.error.userMessage ?? escaped.error.message).toContain(
+      "unsupported characters",
+    );
+  });
+
+  it("persists an interrupted job when the caller cancels", async () => {
+    const root = await projectRoot();
+    await createInvestigationProject(root, "cancel");
+    const targetPath = join(root, "sample.so");
+    await writeFile(targetPath, elf(2, 1, 183));
+    const imported = await importInvestigationTarget(root, targetPath);
+    expect(imported.ok).toBe(true);
+    if (!imported.ok) throw new Error(imported.error.message);
+    const controller = new AbortController();
+    controller.abort();
+    const analyzed = await runInvestigationWorkflow(root, imported.value.target.target_id, {
+      environment: {},
+      signal: controller.signal,
+    });
+    expect(analyzed.ok).toBe(false);
+    const { listInvestigationJobs } = await import("./ProjectStore.js");
+    const jobs = await listInvestigationJobs(root);
+    expect(jobs.ok && jobs.value.some((job) => job.status === "interrupted")).toBe(true);
   });
 });

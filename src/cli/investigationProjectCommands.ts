@@ -158,7 +158,7 @@ export const registerInvestigationProjectCommands = (
           const rerun = await runInvestigationWorkflow(
             options.project,
             analyzed.value.target_id,
-            { resumeJobId: options.job, environment, signal },
+            { resumeJobId: options.job, regenerateReport: true, environment, signal },
           );
           return rerun.ok
             ? rerun.value.job.report_paths
