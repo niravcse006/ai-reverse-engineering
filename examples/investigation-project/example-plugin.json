@@ -1,0 +1,9 @@
+{
+  "name": "example-strings",
+  "version": "1.0.0",
+  "kind": "format-handler",
+  "description": "Example plugin metadata only. REA does not load the entry.",
+  "entry": "handlers/strings.js",
+  "permissions": ["read-target"],
+  "trusted": false
+}
