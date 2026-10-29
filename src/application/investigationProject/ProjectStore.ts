@@ -14,6 +14,7 @@ import {
   investigationCacheKey,
   parseInvestigationJob,
   parseInvestigationProject,
+  type InvestigationFinding,
   type InvestigationJob,
   type InvestigationProject,
   type InvestigationProjectConfig,
@@ -27,6 +28,7 @@ const JOBS_DIRECTORY = "jobs";
 const REPORTS_DIRECTORY = "reports";
 const TARGETS_DIRECTORY = "targets";
 const PLUGINS_DIRECTORY = "plugins";
+const EVIDENCE_DIRECTORY = "evidence";
 
 export interface InvestigationProjectPaths {
   readonly root: string;
@@ -35,6 +37,7 @@ export interface InvestigationProjectPaths {
   readonly reports: string;
   readonly targets: string;
   readonly plugins: string;
+  readonly evidence: string;
 }
 
 export const investigationProjectPaths = (
@@ -48,6 +51,7 @@ export const investigationProjectPaths = (
     reports: join(resolved, REPORTS_DIRECTORY),
     targets: join(resolved, TARGETS_DIRECTORY),
     plugins: join(resolved, PLUGINS_DIRECTORY),
+    evidence: join(resolved, EVIDENCE_DIRECTORY),
   };
 };
 
@@ -78,6 +82,7 @@ export const createInvestigationProject = async (
   await mkdir(paths.reports, { recursive: true, mode: 0o700 });
   await mkdir(paths.targets, { recursive: true, mode: 0o700 });
   await mkdir(paths.plugins, { recursive: true, mode: 0o700 });
+  await mkdir(paths.evidence, { recursive: true, mode: 0o700 });
   const created = now();
   const project: InvestigationProject = {
     version: INVESTIGATION_PROJECT_VERSION,
@@ -387,4 +392,39 @@ export const createInvestigationJob = (
     limitations: [],
     report_paths: {},
   };
+};
+
+/** Persist each finding so evidence IDs resolve to project files. */
+export const writeInvestigationEvidence = async (
+  root: string,
+  findings: readonly InvestigationFinding[],
+): Promise<Result<readonly string[], AnalysisInputError>> => {
+  const paths = investigationProjectPaths(root);
+  await mkdir(paths.evidence, { recursive: true, mode: 0o700 });
+  const written: string[] = [];
+  for (const finding of findings) {
+    if (!/^[A-Za-z0-9_]+$/u.test(finding.finding_id))
+      return err(
+        inputError(
+          "normalize_evidence",
+          "Finding id contains unsupported characters.",
+          ["finding_id"],
+        ),
+      );
+    const evidencePath = join(paths.evidence, `${finding.finding_id}.json`);
+    if (!isPathWithinRoot(paths.evidence, evidencePath))
+      return err(
+        inputError(
+          "normalize_evidence",
+          "Evidence path escaped the project root.",
+          ["finding_id"],
+        ),
+      );
+    await writeFileAtomic(evidencePath, `${JSON.stringify(finding, null, 2)}\n`, {
+      encoding: "utf8",
+      mode: 0o600,
+    });
+    written.push(evidencePath);
+  }
+  return ok(written);
 };

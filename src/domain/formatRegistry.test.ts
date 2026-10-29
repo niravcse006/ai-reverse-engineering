@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { elf, pe } from "./binaryTarget.fixture.js";
+import { elf, fat, pe } from "./binaryTarget.fixture.js";
 import {
   detectRegisteredFormat,
   extractPrintableStrings,
@@ -83,6 +83,27 @@ describe("format registry", () => {
       ok: true,
       value: { format: "typescript", executable: false },
     });
+  });
+
+  it("names universal Mach-O when FAT slices sit outside the probe prefix", () => {
+    const complete = fat([0x0100000c]);
+    const result = detectRegisteredFormat({
+      bytes: complete.subarray(0, 28),
+      fileName: "true",
+      fileSize: complete.length,
+      hostArchitecture: "arm64",
+    });
+    expect(result).toMatchObject({
+      ok: true,
+      value: {
+        format: "mach-o-universal",
+        supported: true,
+        executable: true,
+        architecture: null,
+        confidence: "derived",
+      },
+    });
+    expect(result.ok && result.value.diagnostic).toContain("inspect-macho");
   });
 
   it("returns a diagnostic for unsupported bytes", () => {

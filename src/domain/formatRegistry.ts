@@ -179,11 +179,19 @@ export const detectRegisteredFormat = (
         }),
       );
     }
+    const fatPrefixIncomplete =
+      parsed.error === "FAT slice identity is outside the bounded prefix";
     return ok(
       detection(
-        "unknown",
-        `Bytes claim an executable header family, but parsing failed: ${parsed.error}`,
-        { supported: false, confidence: "derived" },
+        fatPrefixIncomplete ? "mach-o-universal" : "unknown",
+        fatPrefixIncomplete
+          ? "Universal Mach-O magic was observed, but FAT slice headers are outside the bounded prefix. Use inspect-macho on the imported path for a full-file read."
+          : `Bytes claim an executable header family, but parsing failed: ${parsed.error}`,
+        {
+          supported: fatPrefixIncomplete,
+          executable: fatPrefixIncomplete,
+          confidence: "derived",
+        },
       ),
     );
   }

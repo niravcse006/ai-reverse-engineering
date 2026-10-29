@@ -52,6 +52,25 @@ describe("investigation project workflow", () => {
       await readFile(analyzed.value.job.report_paths.json ?? "", "utf8"),
     ) as { job: { status: string } };
     expect(storedReport.job.status).toBe("completed");
+    const evidencePath = join(
+      root,
+      "evidence",
+      `${analyzed.value.job.findings[0]?.finding_id ?? "missing"}.json`,
+    );
+    const storedEvidence = JSON.parse(await readFile(evidencePath, "utf8")) as {
+      finding_id: string;
+      target_sha256?: string;
+    };
+    expect(storedEvidence.finding_id).toBe("ev_format");
+    expect(storedEvidence.target_sha256).toBe(imported.value.target.sha256);
+    expect(
+      analyzed.value.job.findings.some(
+        (finding) =>
+          finding.finding_id === "ev_next_commands" &&
+          finding.confidence === "inferred" &&
+          finding.details.includes("inspect-elf-notes"),
+      ),
+    ).toBe(true);
     expect(
       analyzed.value.job.findings.every(
         (finding) =>

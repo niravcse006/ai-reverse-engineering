@@ -1,5 +1,8 @@
 # Repository assessment
 
+> **Historical.** Current repository state is [FINAL_AUDIT.md](FINAL_AUDIT.md).
+> Keep this page for earlier checkout notes only.
+
 Assessment date: 2026-10-29. Updated the same day after the investigation-report
 increment. Current comparison: [UPSTREAM_COMPARISON.md](UPSTREAM_COMPARISON.md).
 

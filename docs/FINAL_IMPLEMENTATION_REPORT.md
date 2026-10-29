@@ -1,5 +1,8 @@
 # Final implementation report
 
+> **Historical.** The current increment summary is [FINAL_AUDIT.md](FINAL_AUDIT.md).
+> Commands and HEAD values below describe an earlier run.
+
 Date: 2026-10-29.
 Workspace: `/Users/niravsoni/Projects/rea`.
 This report distinguishes commands that ran from work that was not executed.

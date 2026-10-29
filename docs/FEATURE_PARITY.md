@@ -1,5 +1,8 @@
 # Feature parity
 
+> **Historical.** Use [UPSTREAM_PARITY.md](UPSTREAM_PARITY.md) for the current
+> pinned comparison. This page kept older wording and is not the live matrix.
+
 Current comparison, including Mach-O encryption and Linux process-ownership on upstream `main`: [FINAL_AUDIT.md](FINAL_AUDIT.md).
 
 Statuses use the required vocabulary. File paths are the evidence for each row.

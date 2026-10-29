@@ -1,5 +1,11 @@
 # Upstream parity
 
+Date: 2026-10-29.
+This is the current feature-by-feature comparison. Older comparison notes are
+historical: [FEATURE_PARITY.md](FEATURE_PARITY.md),
+[FEATURE_COMPARISON.md](FEATURE_COMPARISON.md),
+[UPSTREAM_COMPARISON.md](UPSTREAM_COMPARISON.md).
+
 Pinned compatible release: **rea-agents 6.8.0**
 tag `160d821ac9a0310afcb8d1fc427862dd6508add5` (2026-10-25).
 
@@ -20,50 +26,70 @@ purpose.
 
 | Capability | Upstream | This tree | Difference / impact | Test | Status |
 | --- | --- | --- | --- | --- | --- |
-| CLI one-shot inspect/analyze/decompile | `src/cli.ts`, `src/cliCommandNames.ts` | Same snapshot | Investigation commands are additive | Investigation CLI tested; upstream family **NOT TESTED** this increment | PARTIAL |
-| MCP tool catalog / stdio | `src/server/` | Same snapshot | Investigation-project commands are CLI-only | `npm run test:mcp` **not run** this increment | NOT TESTED |
+| CLI one-shot inspect/analyze/decompile | `src/cli.ts`, `src/cliCommandNames.ts` | Same snapshot | Investigation commands are additive | Investigation CLI tested; full upstream CLI family **NOT TESTED** this increment | PARTIAL |
+| MCP tool catalog / stdio | `src/server/` | Same snapshot | Investigation-project commands are CLI-only | `npm run test:mcp` exit 1: **41 failed / 205 passed / 3 skipped** files, **139 failed / 1470 passed / 14 skipped** tests. Many failures cite `spawn EPERM` (agent sandbox) or `posix_spawnp` (Rizin PTY). `addressContextBookmarks.test.ts` 7 passed | BROKEN |
 | Evidence contract | `src/domain/evidence.ts` | Same | Unchanged | Existing Evidence suite **not re-run** | NOT TESTED |
 | Hopper / Ghidra / IDA / Kuna | `src/hopper`, `src/ghidra`, `src/ida`, `src/kuna` | Same | BYO engines; missing path is reported | Live lanes **not run** | NOT TESTED |
-| JADX / apktool / Frida / Rizin / objdump | matching `src/*` | Same | Optional | Live lanes **not run**; objdump seen available in earlier smoke | NOT TESTED |
-| ADB PNG header check | `f7cd4e5` | `AdbProvider` + `pngHeader.ts` | Ported | `pngHeader.test.ts` 16 passed. `AdbProvider.test.ts` not run | PARTIAL |
+| JADX / apktool / Frida / Rizin / objdump | matching `src/*` | Same | Optional | Live lanes **not run**; objdump PATH probe only | NOT TESTED |
+| ADB PNG header check | `f7cd4e5` | `AdbProvider` + `pngHeader.ts` | Ported earlier | `pngHeader.test.ts` 16 passed. `AdbProvider.test.ts` not run | PARTIAL |
 | Guidance search | `c88e1b0` `GuidanceAccess.ts` | Absent | `rea guidance` missing | — | MISSING |
 | Environment varied-member writes | `131fbe0` | Absent | Environment write views incomplete vs main | — | MISSING |
 | BinarySession cancel during retirement | `3503578` | Older `BinarySession.ts` | Cancellation edge vs main | — | MISSING |
-| Native bookmark uncertainty | `2b85a4a` | Older native | Bookmark unknowns may be dropped | — | MISSING |
-| Native dispatch format refusals | `e3d8d20` | Older native | Format refusals may be lost | — | MISSING |
+| Native bookmark uncertainty | `2b85a4a` | `AnalysisContextQueries.ts` | Exact string match, then offset+space, else unavailable | `AnalysisContextQueries.test.ts` 23 passed | PASS |
+| Native dispatch format refusals | `e3d8d20` | `AppleDispatchMetadata.ts` + Mach-O/ObjC/Swift facets | Misaligned sections throw `BinaryFormatFailure` then `AnalysisUnsupportedTargetError` | `AppleDispatchMetadata.failure.test.ts` 9 passed; `nativeDispatchFormatFailures.test.ts` added | PASS |
 | Mach-O per-slice encryption | `860fdd8` | Absent `MachoEncryptionReader.ts` | `inspect_macho` lacks slice encryption | — | MISSING |
 | Linux process-ownership on exit | `01e00da` | Older `ProcessOwnership.ts` | Exiting Linux ownership weaker vs main | — | MISSING |
 | Environment sorted creates/toggles | `51ad845` | Absent | Environment write views incomplete vs main | — | MISSING |
-| Browser source-map declaration uncertainty | `1ef5918` | Older browser code | Source-map unknowns may be dropped | — | MISSING |
+| Browser source-map declaration uncertainty | `1ef5918` | Older browser code | Source-map unknowns may be dropped | `sourceToBundleViewsMcp.test.ts` failed in this `test:mcp` run | MISSING |
 | Skill pause-deadline docs | `bd37925` | Older skill docs | Doc only | — | NOT APPLICABLE |
 | rea.tools website setup docs | `d3ecf68` | Product README is this repo | Intentional | — | NOT APPLICABLE |
-| Investigation projects | Not upstream | `src/application/investigationProject/` | Fork-only | Workflow + CLI tests 47 passed | PASS |
+| Investigation projects | Not upstream | `src/application/investigationProject/` | Fork-only | Workflow + remaining-workflow source tests passed | PASS |
+| Next-command findings | Not upstream | `RemainingWorkflows.ts` names existing CLI commands | Reports inferred next `rea …` invocations; does not launch them | RemainingWorkflows + Workflow tests | PASS |
 | Duplicate target reuse | — | `addProjectTarget` | Fork-only | Workflow.test | PASS |
 | Completed-job cache reuse | — | `findReusableCompletedJob` | Fork-only | Workflow.test | PASS |
 | Stale-hash after import | — | `runInvestigationWorkflow` | Fork-only | Workflow safety test | PASS |
 | Schema version refusal | — | `parseInvestigationProject` | Fork-only | investigationProject.test | PASS |
+| Evidence file persistence | — | `writeInvestigationEvidence` | Fork-only | Workflow.test writes `evidence/*.json` | PASS |
+| FAT prefix classification | `parseExecutableHeader` fails when slices are outside the probe | `formatRegistry.ts` names `mach-o-universal` and points at `inspect-macho` | 8 KiB probe no longer reports `/usr/bin/true` as unknown | `formatRegistry.test.ts` + CLI import of `/usr/bin/true` | PASS |
 | Optional `REA_AI_*` | External agent via MCP upstream | `AiProvider.ts` | Host-only disclosure; live HTTP untested | Spend-limit unit test | PARTIAL |
 | Package name `rea-agents` | Official npm | Same runtime name | README says not official publication | Collision check (npm 6.8.0 taken) | NOT APPLICABLE |
-| JS / Electron / .NET / Android / firmware / web / pcap / process / Python | Upstream adapters in `src/` | Same snapshot | Prerequisites optional | Real lanes **not run** | NOT TESTED |
+| JS / Electron / .NET / Android / firmware / web / pcap / process / Python | Upstream adapters in `src/` | Same snapshot | Prerequisites optional | Real lanes **not run**; several MCP files failed in this environment | NOT TESTED |
+
+## Artifact / provider matrix
+
+| Artifact family | Implementation | Prerequisites | Evidence this increment | Status |
+| --- | --- | --- | --- | --- |
+| Native binaries / decompilation | Snapshot adapters + builtin-static project path | Hopper / Ghidra / IDA / Kuna for decompile | `inspect-macho /usr/bin/true` exit 0 (`native-macos`, `mach-o-universal`, arm64e). Deep decompilers not installed | PARTIAL |
+| JavaScript / Electron | Snapshot adapters | Optional browser / Electron | MCP JS/Electron files failed in this run | NOT TESTED |
+| .NET | Snapshot managed adapters | Optional | MCP managed tests passed in the completed `test:mcp` run | NOT TESTED |
+| Android | Snapshot APK/DEX/JADX/ADB | JADX / ADB optional | ADB MCP tests passed; live device **not used** | NOT TESTED |
+| Firmware | Snapshot ESP/FIT/uImage readers | None for static readers | ESP MCP tests passed | NOT TESTED |
+| Websites | Snapshot browser / website adapters | Playwright / browser | Browser MCP files failed | NOT TESTED |
+| Network captures | Snapshot pcap adapters | None for static readers | `pcapWorkspaceAllocation.test.ts` 10 failed | BROKEN |
+| Runtime observation | Frida / process / GDB | Explicit opt-in tools | Frida lifecycle MCP 2 failed | NOT TESTED |
+| Packaged Python | Snapshot pyc inspector | None for static pyc | `pythonPycMcp.test.ts` passed | NOT TESTED |
+| Mach-O inspect | Snapshot `inspect_macho` | Host `lipo` / codesign | CLI `inspect-macho /usr/bin/true` passed. MCP summary file failed in the sandboxed `test:mcp` run (`spawn EPERM` during cleanup) | PARTIAL |
 
 ## Counts (this matrix)
 
 | Status | Count |
 | --- | --- |
-| PASS | 5 |
+| PASS | 10 |
 | PARTIAL | 3 |
-| MISSING | 9 |
-| BROKEN | 0 |
-| NOT TESTED | 5 |
+| MISSING | 7 |
+| BROKEN | 1 |
+| NOT TESTED | 4 |
 | NOT APPLICABLE | 3 |
 
-Do not read these counts as “this fork is better than upstream.” The PASS rows
-are mostly fork-only investigation features. Upstream `main` still has nine
-unported functional commits after the ADB PNG port.
+Do not read these counts as “this fork is better than upstream.” PASS rows are
+mostly fork-only investigation features plus two native ports from `main`.
+Upstream `main` still has seven unported functional commits after those ports.
 
 ## Intentional differences
 
 - Product README describes this GitHub repository, not rea.tools.
 - Investigation CLI does not launch deep engines or the target.
+- `analyze-project` records inferred next commands for existing inspectors; it
+  does not execute `inspect`, `analyze`, `decompile`, or objdump.
 - Runtime identifiers stay `rea-agents` / `io.github.morluto/rea` until the
   owner chooses an independent distribution name.

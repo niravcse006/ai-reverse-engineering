@@ -1,5 +1,8 @@
 # Implementation and verification checklist
 
+> **Historical scorecard.** Current evidence is [FINAL_AUDIT.md](FINAL_AUDIT.md)
+> and [UPSTREAM_PARITY.md](UPSTREAM_PARITY.md).
+
 Date observed: 2026-10-29.
 This document is a plan and scorecard. It is not a claim that this fork is
 better than [morluto/rea](https://github.com/morluto/rea).

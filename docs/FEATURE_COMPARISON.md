@@ -1,5 +1,9 @@
 # Feature comparison
 
+> **Historical.** Current statuses and pinned SHAs are in
+> [UPSTREAM_PARITY.md](UPSTREAM_PARITY.md) and [FINAL_AUDIT.md](FINAL_AUDIT.md).
+> Do not use the counts or upstream SHAs below as the live scorecard.
+
 Comparison of original REA 6.8.0, this working copy, and selected external
 projects. Ratings use demonstrated value in this repository, not marketing
 pages.

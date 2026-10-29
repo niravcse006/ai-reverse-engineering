@@ -417,6 +417,41 @@ describe("analysis context queries: address facets", () => {
   });
 });
 
+describe("analysis context queries: bookmark uncertainty", () => {
+  it.each([
+    ["unknown identity", "entry", "0x401000"],
+    ["different named spaces", "rom:0x401000", "ram:0x401000"],
+  ] as const)(
+    "preserves bookmark address uncertainty for %s",
+    async (_label, address, bookmarkAddress) => {
+      const analysis: AnalysisOperationPort = {
+        execute: (operation) =>
+          Promise.resolve(
+            operation === "list_bookmarks"
+              ? ok(
+                  createAnalysisExecution(
+                    [{ address: bookmarkAddress, name: "review" }],
+                    provider,
+                  ),
+                )
+              : ok(createAnalysisExecution(null, provider)),
+          ),
+      };
+      await expect(
+        inspectAddressContext(analysis, { address, document: "fixture" }),
+      ).resolves.toMatchObject({
+        ok: true,
+        value: {
+          bookmarks: {
+            state: "unavailable",
+            reason: expect.stringContaining("could not be compared"),
+          },
+        },
+      });
+    },
+  );
+});
+
 it("does not start address facets after document selection completes under cancellation", async () => {
   const controller = new AbortController();
   const reason = { request: "cancelled after document selection" };

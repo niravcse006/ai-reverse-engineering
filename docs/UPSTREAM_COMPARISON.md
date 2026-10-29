@@ -1,5 +1,8 @@
 # Upstream comparison
 
+> **Historical.** The live pinned comparison is [UPSTREAM_PARITY.md](UPSTREAM_PARITY.md).
+> SHAs and “ahead N” counts below may be stale.
+
 Current comparison, including upstream `main` `01e00da`: [FINAL_AUDIT.md](FINAL_AUDIT.md).
 
 Compared on 2026-10-29 without overwriting this repository.

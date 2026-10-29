@@ -47,8 +47,12 @@ import {
   loadInvestigationProject,
   readLocalFilePrefix,
   saveInvestigationJob,
+  writeInvestigationEvidence,
 } from "./ProjectStore.js";
-import { remainingWorkflowsFor } from "./RemainingWorkflows.js";
+import {
+  nextAnalysisCommandsFor,
+  remainingWorkflowsFor,
+} from "./RemainingWorkflows.js";
 import { writeInvestigationReports } from "./ReportWriter.js";
 
 const MAX_PROBE_BYTES = 8 * 1024;
@@ -408,12 +412,31 @@ export const runInvestigationWorkflow = async (
       .join(", "),
   });
 
+  const remaining = remainingWorkflowsFor(format.value.format, backends);
   const collected = await collectStaticFindings(target, format.value);
+  const nextCommands = nextAnalysisCommandsFor(target.path, remaining);
+  const findings = nextCommands
+    ? [
+        ...collected.findings,
+        {
+          finding_id: "ev_next_commands",
+          title: "Existing analysis commands for this imported target",
+          kind: "metadata" as const,
+          confidence: "inferred" as const,
+          evidence_ids: ["ev_next_commands"],
+          details: nextCommands,
+          verified: false,
+          target_id: target.target_id,
+          target_sha256: target.sha256,
+          provider: "builtin-static",
+        },
+      ]
+    : collected.findings;
   job = {
     ...updateStage(job, "static_analysis", "completed", {
-      summary: `${String(collected.findings.length)} findings`,
+      summary: `${String(findings.length)} findings`,
     }),
-    findings: collected.findings,
+    findings,
     limitations: collected.limitations,
   };
 
@@ -431,8 +454,14 @@ export const runInvestigationWorkflow = async (
     });
   }
 
+  const evidence = await writeInvestigationEvidence(projectRoot, job.findings);
+  if (!evidence.ok)
+    return fail(
+      "normalize_evidence",
+      evidence.error.userMessage ?? evidence.error.message,
+    );
   job = updateStage(job, "normalize_evidence", "completed", {
-    summary: "Findings retained with evidence identifiers.",
+    summary: `${String(evidence.value.length)} evidence records written.`,
   });
 
   let ai: AiInterpretation | null = null;
@@ -480,7 +509,6 @@ export const runInvestigationWorkflow = async (
     });
   }
 
-  const remaining = remainingWorkflowsFor(format.value.format, backends);
   job.limitations.push(
     ...remaining
       .filter((workflow) => !workflow.usable)
