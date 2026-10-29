@@ -1,6 +1,6 @@
 # Upstream comparison
 
-Current comparison, including `860fdd8` and later smoke results: [FINAL_AUDIT.md](FINAL_AUDIT.md).
+Current comparison, including upstream `main` `01e00da`: [FINAL_AUDIT.md](FINAL_AUDIT.md).
 
 Compared on 2026-10-29 without overwriting this repository.
 

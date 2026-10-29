@@ -1,6 +1,6 @@
 # Feature parity
 
-Current comparison, including Mach-O per-slice encryption on upstream `main`: [FINAL_AUDIT.md](FINAL_AUDIT.md).
+Current comparison, including Mach-O encryption and Linux process-ownership on upstream `main`: [FINAL_AUDIT.md](FINAL_AUDIT.md).
 
 Statuses use the required vocabulary. File paths are the evidence for each row.
 

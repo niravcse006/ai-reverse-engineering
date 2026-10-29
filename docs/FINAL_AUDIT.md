@@ -1,54 +1,65 @@
 # Final audit
 
-Date: 2026-10-29.
+Date: 2026-10-29 (this increment).
 Workspace: `/Users/niravsoni/Projects/rea`.
 Repository: https://github.com/niravcse006/ai-reverse-engineering
 
 This report records only work that ran in this increment. It does not claim
 this fork is better than `morluto/rea`.
 
-## 1. Git baseline
+## 1. Public snapshot vs local Git
 
-User changes were preserved. No files were discarded.
+There were **no new pushed commits** after the previous audit landing. Local
+`main` and GitHub `main` are the same commit. This increment started from that
+snapshot and did not rewrite it.
 
 | Item | Value |
 | --- | --- |
-| Starting HEAD | `a8c898bc7ca9932890e2f5ac11cd38bee27b4b69` (`Harden investigation reports and port the ADB PNG header check.`) |
-| Remote | `git@github.com-niravcse006:niravcse006/ai-reverse-engineering.git` |
-| Starting tree | Clean (`main` matched `origin/main`) |
-| Ending tree | The two workflow files below plus this document and comparison pointers |
+| Visible GitHub `main` | [`490a7911674246a7aa08e7a7788fca992125d1d8`](https://github.com/niravcse006/ai-reverse-engineering/commit/490a7911674246a7aa08e7a7788fca992125d1d8) |
+| Local `HEAD` | `490a7911674246a7aa08e7a7788fca992125d1d8` |
+| `origin/main` vs `HEAD` | Ahead 0, behind 0 |
+| Working tree at inspection | Clean |
+| GitHub commit date | 2026-10-29T10:39:10Z |
+| Subject | Record the upstream 6.8.0 audit and persist completed report snapshots. |
+| Commit author recorded by Git | `Chintan Hingarajiya <chintan.hingarajiya@multidots.com>` |
+
+The GitHub snapshot already includes the completed-report snapshot fix and the
+previous `FINAL_AUDIT.md`. Newer work in this increment is documentation only
+(this file, comparison pointers, and a privacy-table clarification). Production
+code was not changed.
 
 ## 2. Exact upstream references
 
 Latest compatible official release remains **v6.8.0**. No newer GitHub release
-or npm version exists. Current upstream `main` is newer than that release, but
-it is not a published compatible release and was not merged into this tree.
+or npm version exists. Upstream `main` moved **one commit** since the previous
+audit (`860fdd8` → `01e00da`). That commit is not a release and was not merged.
 
 | Reference | Exact value |
 | --- | --- |
 | Latest GitHub release | [rea-agents-6.8.0](https://github.com/morluto/rea/releases/tag/rea-agents-6.8.0) |
 | Release name | `rea-agents: v6.8.0` |
-| Release tag commit | `160d821ac9a0310afcb8d1fc427862dd6508add5` (annotated as `target_commitish` and `refs/tags/rea-agents-6.8.0`) |
+| Release tag commit | `160d821ac9a0310afcb8d1fc427862dd6508add5` |
 | Published | 2026-10-25T08:36:02Z |
-| npm `rea-agents` | `6.8.0` (registry `latest`, updated 2026-10-25T09:07:31.934Z) |
+| npm `rea-agents` | `6.8.0` (registry `latest`, still updated 2026-10-25T09:07:31.934Z) |
 | Snapshot imported into this repository | `17ceb77ca5f2632faab8de01da4babff680eac48` (post-tag 6.8.0 snapshot, not the tag itself) |
-| Upstream `main` at audit time | `860fdd8fbeded2ddf9abfac61f6982db7458e94e` |
-| `main` commit date | 2026-10-29T10:19:39Z |
-| `main` subject | `feat(macho): report per-slice encryption status in inspect_macho (#5359)` |
-| Compare used | GitHub compare API `17ceb77ca5f2632faab8de01da4babff680eac48...main` |
-| Delta | Ahead 9 commits, behind 0, 132 files |
+| Upstream `main` at this increment | `01e00dae72e1dbac91b2f5d9997d5e0b8091ad3a` |
+| `main` commit date | 2026-10-29T10:40:12Z |
+| `main` subject | `fix(process): corroborate exiting Linux ownership candidates (#7958)` |
+| Previous audit’s `main` | `860fdd8fbeded2ddf9abfac61f6982db7458e94e` |
+| Compare used | GitHub compare API `17ceb77ca5f2632faab8de01da4babff680eac48...main` and `860fdd8...main` |
+| Delta vs snapshot | Ahead 10 commits, behind 0, 140 files |
+| New since previous audit | 1 commit, 8 files (`ProcessOwnership*` plus three bundle-comparison tests) |
 
-This checkout is a snapshot plus local commits, not a git clone that shares
-objects with `morluto/rea`. Compatibility decision: stay on the 6.8.0 line
-(`17ceb77` snapshot + local investigation work). Porting current `main` would
-be a merge of eight remaining upstream commits, which is outside this audit.
+Compatibility decision is unchanged: stay on the 6.8.0 line (`17ceb77` snapshot
+plus local investigation work). Porting current `main` is a merge of nine
+remaining upstream commits and is outside this increment.
 
 ## 3. Identity and publishing metadata
 
-No identifiers were renamed. A rename would collide with the published npm
-package, break `npx rea-agents`, and invalidate MCP client registrations.
-`tests/conformance/releaseConfiguration.test.ts` still expects
-`mcpName: "io.github.morluto/rea"`.
+Checked again. **No rename was implemented.** A consistent independent
+identity is possible later; doing it in this increment would be a breaking
+refactor, would not be published (forbidden here), and would leave MCP clients
+and conformance tests half-migrated.
 
 | Field | This tree | Upstream 6.8.0 / npm |
 | --- | --- | --- |
@@ -60,80 +71,100 @@ package, break `npx rea-agents`, and invalidate MCP client registrations.
 | `PRODUCT_IDENTITY.cliBinary` / `mcpServerKey` | `rea` | `rea` |
 | `PRODUCT_IDENTITY.skillName` | `reverse-engineer-anything` | `reverse-engineer-anything` |
 | Homepage / bugs / repository | `niravcse006/ai-reverse-engineering` | `morluto/rea` |
-| `package.json` description | Fork product text | Upstream slogan |
-| CLI help banner | Hardcoded `Reverse engineer anything from your terminal or agent.` in `src/cli.ts` | Same slogan |
+| `publishConfig.access` | `public` | `public` |
+| CLI help banner | Hardcoded upstream slogan in `src/cli.ts` | Same slogan |
 
-The banner mismatch with `package.json#description` is cosmetic. It was left
-unchanged because it is not a functional regression and changing it has
-distribution/docs implications.
+Registry collisions (HTTP, this increment):
 
-## 4. Missing upstream features, regressions, unverified claims
+| Name | npm result |
+| --- | --- |
+| `rea-agents` | **Taken.** Official package 6.8.0, homepage `morluto/rea`, ~478k weekly downloads |
+| `ai-reverse-engineering` | 404 (unpublished) |
+| `@niravcse006/ai-reverse-engineering` | 404 (unpublished) |
+| `@niravcse006/rea` | 404 (unpublished) |
 
-Commits on `morluto/rea` `main` after `17ceb77`, from the compare API:
+README already states this repository is **not** the official `rea-agents`
+publication and that global install is `npm install --global .` from this tree.
+`tests/conformance/releaseConfiguration.test.ts` still expects
+`mcpName: "io.github.morluto/rea"`.
+
+Proposed future migration (not executed, not published):
+
+1. Choose `@niravcse006/ai-reverse-engineering` (unpublished; scoped to the GitHub owner).
+2. Keep a local `rea` bin alias; add a distinct package-name bin if needed.
+3. Change `mcpName` to `io.github.niravcse006/ai-reverse-engineering` only with
+   documented MCP client dual-write.
+4. Do **not** publish under `rea-agents`. That would impersonate upstream.
+
+## 4. Missing upstream features, regressions, intentional differences
+
+Commits on `morluto/rea` `main` after `17ceb77`:
 
 | Commit | Subject | Status here |
 | --- | --- | --- |
 | `e3d8d20` | fix(native): preserve dispatch metadata format refusals | Missing / older native code |
 | `2b85a4a` | fix(native): preserve bookmark address uncertainty | Missing / older native code |
-| `f7cd4e5` | fix(adb): validate screen capture PNG headers | Ported earlier (`AdbProvider` uses `readPngHeaderDimensions`) |
+| `f7cd4e5` | fix(adb): validate screen capture PNG headers | Ported earlier |
 | `bd37925` | docs(skill): clarify scenario pause deadlines | Missing skill-doc tweak |
 | `3503578` | fix(session): preserve cancellation during mutation retirement | Regressed relative to upstream `BinarySession.ts` |
 | `131fbe0` | feat(environment): serve writes whose calls send different members | Missing |
-| `c88e1b0` | feat(guidance): search installed workflow sections | Missing (`GuidanceAccess.ts` / `rea guidance` absent) |
-| `d3ecf68` | docs(website): clarify platform setup requirements | Not applicable to this product README |
-| `860fdd8` | feat(macho): report per-slice encryption status | Missing (`MachoEncryptionReader.ts` absent) |
+| `c88e1b0` | feat(guidance): search installed workflow sections | Missing |
+| `d3ecf68` | docs(website): clarify platform setup requirements | Intentional: this product README is not rea.tools |
+| `860fdd8` | feat(macho): report per-slice encryption status | Missing |
+| `01e00da` | fix(process): corroborate exiting Linux ownership candidates | **New since last audit. Not ported.** Local `ProcessOwnership.ts` is older |
 
-Fork-only additions, absent from upstream `main`: investigation project domain,
-store, workflow, report/AI contracts, and CLI (`init-project`, `import-target`,
-`inspect-target`, `analyze-project`, report/resume/plugin helpers).
+Intentional fork-only additions (absent from upstream `main`): investigation
+projects, reports, optional `REA_AI_*` disclosure, and the product README.
 
-Unverified claims (code exists; this increment did not prove behavior):
+`01e00da` was not ported: it is not in the compatible 6.8.0 release, it touches
+process-ownership and large native-exit tests, and no local failing case was
+observed. Copying it would be a new merge, not a confirmed defect fix.
 
-- Full `npm test` / `npm run check:pr`
-- Real Ghidra, Hopper, IDA, Kuna, JADX, Frida, or ADB provider lanes
-- `src/adb/AdbProvider.test.ts` (PNG helper tests ran; the provider test did not)
-- Live `REA_AI_*` HTTP to a real endpoint
-- MCP stdio/HTTP catalog against a real client
-- Upstream guidance, environment-varied-write, BinarySession, native bookmark,
-  native dispatch, and Mach-O encryption tests (those files are missing or older)
+## 5. Local-only analysis and AI transmission
 
-Do not treat this fork as newer or better than `morluto/rea` `main`. It is
-behind those eight unported commits.
+Source review of `Workflow.ts` / `AiProvider.ts` / `aiProviderContract.ts`
+against [PRIVACY.md](PRIVACY.md) and [AI_PROVIDERS.md](AI_PROVIDERS.md):
 
-## 5. Confirmed bug fixed in this increment
+| Claim | Verdict |
+| --- | --- |
+| Builtin `inspect-target` / `analyze-project` stay on disk unless AI is enabled | Confirmed in code and CLI smoke (`ai_disclosure.attempted: false`) |
+| Target is not executed by those commands | Confirmed (`optional_dynamic` skipped; limitations say never executed) |
+| Default provider is `none` | Confirmed |
+| Enabled AI sends findings JSON via `globalThis.fetch` to `REA_AI_ENDPOINT` | Confirmed in `Workflow.ts` (only when `ai_enabled` and provider ready) |
+| Spend limit `0` refuses before fetch | Confirmed by `Workflow.test.ts` |
+| Disclosure stores host, not API key | Confirmed (`createAiDisclosure`) |
+| Untrusted target text is wrapped | Confirmed (`wrapUntrustedTargetContent`) |
+| Live HTTP to a real model | **Not run** |
 
-**Stale report job snapshot.** Before this change, `runInvestigationWorkflow`
-wrote JSON/Markdown reports while the in-memory job was still `running` and
-`generate_report` / `persist_job` were still pending. After persist, CLI output
-and `jobs/<id>.json` showed `completed`, but `reports/<id>.json` still said
-`running`. Observed in the previous smoke under `/tmp/rea-smoke-HGsc`.
+[PRIVACY.md](PRIVACY.md) was updated to say `analyze-project` uses
+`globalThis.fetch` only when the job enables AI and a provider is ready. That
+matches the implementation. Docs were not claiming a stronger “never leaves
+the machine” guarantee.
 
-Fix: finalize job status and report paths first, then write the report once
-with that completed job, then persist. `Workflow.test.ts` now reads the on-disk
-JSON and requires `job.status === "completed"`.
+## 6. Defects in this increment
 
-No other high-priority production bug was confirmed. Remaining gaps are missing
-upstream ports, unrun suites, or identity/distribution decisions.
+No new high-priority production defect was confirmed. The stale report snapshot
+is already fixed in GitHub `490a791`. Identity rename was **not** treated as a
+defect: the current names match upstream runtime identity, and README already
+disclaims official npm publication.
 
-## 6. Files changed
+## 7. Files changed in this increment
 
 | Path | Change |
 | --- | --- |
-| `src/application/investigationProject/Workflow.ts` | Write reports after the job is marked completed |
-| `src/application/investigationProject/Workflow.test.ts` | Assert the stored report snapshot is `completed` |
-| `docs/FINAL_AUDIT.md` | This report |
-| `docs/UPSTREAM_COMPARISON.md` | Pointer to this current comparison |
-| `docs/FEATURE_PARITY.md` | Pointer to this current comparison |
+| `docs/FINAL_AUDIT.md` | This increment’s evidence (GitHub vs local, new `main` `01e00da`, identity collisions) |
+| `docs/UPSTREAM_COMPARISON.md` | Pointer updated to `01e00da` |
+| `docs/FEATURE_PARITY.md` | Pointer mentions process-ownership on `main` |
+| `docs/PRIVACY.md` | Clarify when `globalThis.fetch` runs |
 
-Production code was otherwise left untouched.
+Production source was left untouched.
 
-## 7. Investigation, privacy, and recovery evidence
+## 8. Tests and CLI smoke (executed this increment)
 
-Node used: **v22.23.4** (`~/.nvm/versions/node/v22.23.4`). `.nvmrc` pins
-`24.22.1`, which is not installed here. v22.23.4 is inside
-`package.json#engines` (`^22.23.4 || ^24.22.1 || >=26.12.1`).
+Node: **v22.23.4**. `.nvmrc` is `24.22.1` (not installed). v22.23.4 is inside
+`package.json#engines`.
 
-### Source tests (executed)
+### Source tests
 
 ```text
 npm run test:local -- \
@@ -148,110 +179,88 @@ npm run test:local -- \
   src/cliInvestigationProject.test.ts
 ```
 
-Result: **9 files, 43 tests passed.** Covers project create/import/inspect,
-duplicate-target reuse, completed-job cache reuse, corrupted `project.json`
-refusal, empty-file import refusal, stored report `completed` status, remaining
-workflows, spend-limit `0` refusal before `fetch`, angr unavailable, plugin
-metadata-only validation, and PNG header parsing.
+Result: **9 files, 43 tests passed.** Persistence, duplicate-target reuse,
+completed-job reuse, corrupted `project.json`, empty import, stored report
+`completed`, spend-limit refusal, and PNG header tests are in that set.
 
-### Typecheck, lint, build (executed)
+### Typecheck, lint, build
 
 | Command | Result |
 | --- | --- |
-| `npm run check:fast` | Passed. Turbo `typecheck` + `lint`: 2 successful, 0 cached, 12.846s |
-| `npm run build:cached` | Passed. 3 successful, 1 cached, 9.723s. Compile emitted only existing `INEFFECTIVE_DYNAMIC_IMPORT` warnings |
+| `npm run check:fast` | Passed. Turbo `typecheck` + `lint`: 2 successful, **2 cached**, 119ms |
+| `npm run build:cached` | Passed. 3 successful, **3 cached**, 118ms. Replay still shows the existing `INEFFECTIVE_DYNAMIC_IMPORT` compile warnings |
 
-### CLI smoke (executed after the build)
+Cache hits mean this increment did not recompile; the previous increment’s
+successful compile remains the artifact on disk.
 
-Fixture: synthetic ELF64 little-endian arm64 plus ASCII `HelloREA` at
-`/tmp/rea-final-audit-X9RizB/sample.so` (72 bytes).
+### CLI smoke (`/tmp/rea-audit2-L4wtPe`)
+
+Synthetic ELF64 LE arm64 plus ASCII `HelloREA` (72 bytes). SHA-256
+`5e9ff4f8114c5edb41b531cc591a76cdd23986006200b5f5859b6d86b62d14dc` matched an
+independent digest.
 
 | Check | Result |
 | --- | --- |
-| `rea --help` | Exit 0. Banner `rea@6.8.0 — Reverse engineer anything from your terminal or agent.` Investigation commands listed. |
-| `init-project` | Exit 0. Project `audit-smoke`, `ai_enabled: false`, empty targets/jobs. |
-| `import-target` | Exit 0. `target_id` `tgt_c4a25b9e3d1e47a8bc2f010ef8e35057`, `format` elf / arm64, `sha256` `5e9ff4f8114c5edb41b531cc591a76cdd23986006200b5f5859b6d86b62d14dc` |
-| Independent SHA-256 of the fixture | Same digest |
-| `inspect-target` | Exit 0. Same hash. Builtin-static available; Ghidra/Hopper/IDA/Kuna unavailable. Remaining workflows named. |
-| `analyze-project` | Exit 0. `job_id` `job_fe817f95fe2a4bbc8c7e56d10ba2b551`, `status` completed, 3 findings with `evidence_ids` (`ev_format`, `ev_arch`, `ev_strings`), `HelloREA` retained, 10 stages completed or skipped as designed |
-| On-disk report JSON | `job.status` **completed**; `generate_report` and `persist_job` completed; AI disclosure `attempted: false`, `provider: none`, host omitted; provenance `v22.23.4` / darwin / arm64 |
-| Persisted job JSON | `status` completed; `cache_key` starts with the SHA-256 |
-| Second `analyze-project` | Exit 0. Same `job_id` (completed-job reuse) |
-| Empty-file `import-target` | Exit 1. `Empty files cannot be imported.` |
-| `providers` | Exit 0. Catalog printed (native macOS utilities available; deep engines not configured) |
-| `doctor` | Exit 1, `healthy: false`, `environment_healthy: false`. Node 22.23.4 healthy. Hopper/Ghidra/IDA/JADX/Kuna missing. Skill identity and client registrations missing. Expected on this machine. |
+| `rea --help` | Exit 0 |
+| `init-project` | Exit 0 |
+| `import-target` | Exit 0. `tgt_647fca65186e4326b3a452d7f3e2aa70`, format elf |
+| `inspect-target` | Exit 0. Same hash |
+| `analyze-project` | Exit 0. `job_7cbaf1f5ffe4485d9ddb6ac5f745c4a6`, status completed |
+| On-disk JSON + Markdown reports | Present. `job.status` completed; all ten stages completed or skipped; 3 findings with `evidence_ids`; AI skipped |
+| Second `analyze-project` | Exit 0. Same `job_id` (cache reuse). One job file on disk |
+| `resume-job` on that id | Exit 0. Same `job_id`, status completed |
+| `generate-report` | Exit 0. Rewrote the same JSON/Markdown paths |
+| Empty-file import | Exit 1. `Empty files cannot be imported.` |
+| `resume-job` missing id | Exit 1. `Job job_does_not_exist was not found.` |
+| `providers` | Exit 0 |
+| `doctor` | Exit 1, `healthy: false` (missing engines/skill/registrations; expected) |
 
-`analyze-project` did not execute the fixture and did not select Frida/GDB.
+`analyze-project` did not execute the fixture.
 
-### External AI, secrets, untrusted artifacts
-
-Source-level review plus the tests above. No live provider HTTP was sent.
-
-| Control | Evidence |
-| --- | --- |
-| Local default | Default `REA_AI_PROVIDER` / job `ai_enabled` is off. Smoke report: `attempted: false`, `provider: none` |
-| Spend limit 0 | `interpretEvidenceWithAi` returns before `fetchImpl` (`Workflow.test.ts`) |
-| Missing fetch client | Production path requires an injected `fetch`; missing client is an unavailable error, not a send |
-| Disclosure | `createAiDisclosure` records provider, model, **host only**, bytes, attempted. API keys are not included |
-| Secrets | `REA_AI_API_KEY` is read from the environment and used only as a Bearer header. `.env` is gitignored |
-| Untrusted target text | `wrapUntrustedTargetContent` wraps evidence before any model prompt |
-| Exploitability claims | `parseAiInterpretation` rejects exploit/RCE/0-day wording |
-| Empty / corrupt artifacts | Empty import refused; corrupted `project.json` refused |
-
-Live transmission to an operator-chosen `REA_AI_ENDPOINT` remains untested.
-
-## 8. Checks not run
+## 9. Checks not run
 
 - `npm test`
 - `npm run check:pr`
 - `npm run docs:check`
-- Real deep-engine or ADB provider suites
+- Real Ghidra / Hopper / IDA / Kuna / JADX / Frida / ADB lanes
+- `src/adb/AdbProvider.test.ts`
 - MCP client round-trip
-- Live AI HTTP
-- Upstream tests for the eight unported `main` commits
+- Live `REA_AI_*` HTTP
+- Upstream tests for the nine unported `main` commits, including `01e00da`
 
 Absence of those results is not a pass.
 
-## 9. Remaining risks
+## 10. Remaining risks
 
-1. **Upstream drift.** Eight `main` commits after `17ceb77` are still missing.
-   The highest functional risks are BinarySession cancellation, native
-   bookmark/dispatch refusals, and Mach-O per-slice encryption.
-2. **Deep engines unverified.** Builtin-static smoke is not a substitute for
-   Ghidra/IDA/Hopper/Kuna/JADX.
-3. **Optional AI.** Unit refusals passed; a real endpoint, key handling, and
-   timeout/retry path were not exercised.
-4. **Identity collision.** Publishing `rea-agents` / `io.github.morluto/rea`
-   from this GitHub repository would impersonate upstream. Keep the names until
-   a scoped rename is planned.
-5. **Investigation depth.** `analyze-project` records builtin findings and
-   remaining workflows. It does not attach inspect/decompile Evidence from a
-   deep engine, because those engines were not configured here.
-6. **Doctor/skill.** `healthy: false` is correct without `rea setup` and BYO
-   engines. It is not a product regression.
+1. **Upstream drift.** Nine `main` commits after `17ceb77` are unported. New
+   since last audit: Linux process-ownership corroboration (`01e00da`).
+   Highest prior risks remain BinarySession cancellation, native
+   bookmark/dispatch, and Mach-O per-slice encryption.
+2. **Deep engines unverified.**
+3. **Optional AI untested against a live endpoint.**
+4. **Identity collision if published as `rea-agents`.** Do not publish.
+5. **Git author on `490a791`** is still the local `user.name` /
+   `user.email` (Chintan Hingarajiya). The GitHub repo owner is niravcse006.
+   Rewriting that commit was out of scope.
+6. **`doctor` / skill / client registrations** remain unconfigured here.
 
-## 10. Prioritized next steps
+## 11. Prioritized next steps
 
-1. Port the eight remaining upstream `main` commits, starting with
-   `3503578` (session cancellation), `2b85a4a` / `e3d8d20` (native), and
-   `860fdd8` (Mach-O encryption). Keep investigation code additive.
-2. Run `npm run check:pr` and at least one real-provider lane when those
-   tools are available.
-3. If a live AI endpoint is required, add a bounded integration test that
-   asserts host-only disclosure and never logs the API key.
-4. Decide a scoped npm/MCP rename only after documenting client migration.
-   Do not publish under `rea-agents`.
-5. Keep attaching deep-engine Evidence as a separate workflow, not by expanding
-   `analyze-project` into an undeclared engine launcher.
+1. Port remaining upstream `main` commits when their tests can run here,
+   starting with `3503578`, `2b85a4a` / `e3d8d20`, `860fdd8`, then `01e00da`.
+2. Run `npm run check:pr` and one real-provider lane when tools exist.
+3. If independent distribution is required, execute the scoped rename plan in
+   section 3 as its own PR, with conformance-test updates, and do not publish
+   under `rea-agents`.
+4. If live AI is required, add a bounded integration test that never logs the
+   API key.
+5. Do not expand `analyze-project` into an undeclared deep-engine launcher.
 
-## 11. Conclusion
+## 12. Conclusion
 
-Latest compatible upstream release: **rea-agents 6.8.0** at
-`160d821ac9a0310afcb8d1fc427862dd6508add5`. This tree is the later snapshot
-`17ceb77ca5f2632faab8de01da4babff680eac48` plus local investigation work,
-compared against current `main` `860fdd8fbeded2ddf9abfac61f6982db7458e94e`.
-
-The only justified production change was the completed-job report snapshot.
-Executed investigation, typecheck, lint, build, and CLI smoke checks passed
-as recorded above. This fork is not ahead of, and is not claimed to be better
-than, upstream `main`.
+GitHub and local `main` are both `490a791`. Latest compatible upstream release
+is still **rea-agents 6.8.0** at `160d821ac9a0310afcb8d1fc427862dd6508add5`.
+Current upstream `main` is `01e00dae72e1dbac91b2f5d9997d5e0b8091ad3a` (one
+commit newer than the previous audit). No production fix was justified. Identity
+was left on the upstream runtime names after a collision check. This fork is
+not ahead of, and is not claimed to be better than, upstream `main`.
