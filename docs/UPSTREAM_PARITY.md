@@ -1,119 +1,171 @@
 # Upstream parity
 
-Date: 2026-10-29.
-This is the current feature-by-feature comparison. Older comparison notes are
-historical: [FEATURE_PARITY.md](FEATURE_PARITY.md),
+Date: 2026-10-30.
+This is the live feature-by-feature comparison. Older notes:
+[FEATURE_PARITY.md](FEATURE_PARITY.md),
 [FEATURE_COMPARISON.md](FEATURE_COMPARISON.md),
 [UPSTREAM_COMPARISON.md](UPSTREAM_COMPARISON.md).
+Implementation order: [IMPLEMENTATION_ROADMAP.md](IMPLEMENTATION_ROADMAP.md).
 
 Pinned compatible release: **rea-agents 6.8.0**
 tag `160d821ac9a0310afcb8d1fc427862dd6508add5` (2026-10-25).
 
 Imported snapshot in this tree: `17ceb77ca5f2632faab8de01da4babff680eac48`.
 
-Previous pinned upstream tips:
+This fork HEAD when recorded: `1fa70495874a90144fab7ffca9971bb390641626`.
 
-- `1ef5918179d3cb77b8868bd117de662cbd7099ab` (ahead 12)
-- `34577eb1cc264000a176ded68e5ebf8aba430edd` (ahead 17)
+Upstream `main` from `npm run upstream:drift` on 2026-10-30:
 
-Upstream `main` recorded by `npm run upstream:drift` this increment:
-`317bf3fe235e655b2d752d3be261cc0da7d00f2b` (ahead 40).
-Compare: GitHub `17ceb77...main`. This is not a moving comparison without a SHA.
+`b1ff7cdacc03110d51bcac33da3cbb7850ac27fc` (**ahead 56**, behind 0).
 
-New commits after `34577eb` were inspected by title and file list only. None
-were ported this increment. Highest-priority unported items: evidence
-publication limits (`bf115be`), debugger cleanup typing (`a108a1b`), Mach-O
-BOM/selection (`da5ec6b`, `c0c3902`), ADB long-path pushes (`1da304b`), Bun
-standalone graphs (`8188497`). Large contract/admission refactors are not
-automatic ports.
+Compare: GitHub `17ceb77...b1ff7cd`. This is not a moving comparison without a
+SHA.
 
-Statuses: **PASS** implemented and verified here · **PARTIAL** present with
+Statuses: **MATCHED** present here with tests · **PARTIAL** present with
 limits · **MISSING** absent · **BROKEN** present but failing · **NOT TESTED**
 code exists, this increment did not prove it · **NOT APPLICABLE** excluded on
 purpose.
 
 `npm run upstream:drift` reprints the unported commit list. It does not merge.
 
-## Matrix
+This increment **did not port** the 56-commit gap. It recorded the inventory
+and a sequenced plan. Do not read this document as “this fork is better than
+upstream.”
 
-| Capability                                                                | Upstream                                                        | This tree                                                                  | Difference / impact                                                                   | Test                                                                                                                                                | Status         |
-| ------------------------------------------------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
-| CLI one-shot inspect/analyze/decompile                                    | `src/cli.ts`, `src/cliCommandNames.ts`                          | Same snapshot                                                              | Investigation commands are additive                                                   | Investigation CLI tested; full upstream CLI family **NOT TESTED** this increment                                                                    | PARTIAL        |
-| MCP tool catalog / stdio                                                  | `src/server/`                                                   | Same snapshot + cancellation fix                                           | Investigation-project commands are CLI-only                                           | Unsandboxed `test:mcp` exit 1: **5 failed / 1612 passed / 13 skipped**. Prior JSON-cancel case passed. Five load timeouts passed focused (11 tests) | PARTIAL        |
-| Evidence contract                                                         | `src/domain/evidence.ts`                                        | Same                                                                       | Unchanged                                                                             | Existing Evidence suite **not re-run**                                                                                                              | NOT TESTED     |
-| Hopper / Ghidra / IDA / Kuna                                              | `src/hopper`, `src/ghidra`, `src/ida`, `src/kuna`               | Same                                                                       | BYO engines; missing path is reported                                                 | Live lanes **not run**. Ghidra MCP reopen passed in the unsandboxed suite                                                                           | NOT TESTED     |
-| JADX / apktool / Frida / Rizin / objdump                                  | matching `src/*`                                                | Same                                                                       | Optional                                                                              | Live lanes **not run**. Frida and Rizin MCP files passed in the unsandboxed suite                                                                   | NOT TESTED     |
-| ADB PNG header check                                                      | `f7cd4e5`                                                       | `AdbProvider` + `pngHeader.ts`                                             | Ported earlier                                                                        | `pngHeader.test.ts` 16 passed. `AdbProvider.test.ts` not run                                                                                        | PARTIAL        |
-| Guidance search                                                           | `c88e1b0` `GuidanceAccess.ts`                                   | Absent                                                                     | `rea guidance` missing                                                                | —                                                                                                                                                   | MISSING        |
-| Environment varied-member writes                                          | `131fbe0`                                                       | Absent                                                                     | Environment write views incomplete vs main                                            | —                                                                                                                                                   | MISSING        |
-| BinarySession cancel during retirement                                    | `3503578`                                                       | Ported                                                                     | Cancellation retained through retirement and cleanup owners                           | `gdbRetirementCancellation.test.ts` 7 passed; BinarySession composition cases                                                                       | PASS           |
-| Native bookmark uncertainty                                               | `2b85a4a`                                                       | `AnalysisContextQueries.ts`                                                | Exact string match, then offset+space, else unavailable                               | `AnalysisContextQueries.test.ts` 23 passed                                                                                                          | PASS           |
-| Native dispatch format refusals                                           | `e3d8d20`                                                       | `AppleDispatchMetadata.ts` + Mach-O/ObjC/Swift facets                      | Misaligned sections throw `BinaryFormatFailure` then `AnalysisUnsupportedTargetError` | `AppleDispatchMetadata.failure.test.ts` 9 passed; `nativeDispatchFormatFailures.test.ts` added                                                      | PASS           |
-| Mach-O per-slice encryption                                               | `860fdd8`                                                       | Absent `MachoEncryptionReader.ts`                                          | `inspect_macho` lacks slice encryption                                                | —                                                                                                                                                   | MISSING        |
-| Linux process-ownership on exit                                           | `01e00da`                                                       | Ported                                                                     | Linux ENOENT/ESRCH token races corroborated before signal                             | 135 passed / 2 skipped (Linux live spawn skipped on Darwin)                                                                                         | PASS           |
-| Environment sorted creates/toggles                                        | `51ad845`                                                       | Absent                                                                     | Environment write views incomplete vs main                                            | —                                                                                                                                                   | MISSING        |
-| Browser source-map declaration uncertainty                                | `1ef5918`                                                       | Ported                                                                     | Invalid/omitted declarations stay unknown; diffs do not treat them as absent          | CDP metadata, `webCaptureDiff`, and browser CLI tests passed                                                                                        | PASS           |
-| JavaScript semantic-trace operator influence                              | `5c05eb8`                                                       | Absent                                                                     | Breaking semantic-trace change on main                                                | —                                                                                                                                                   | MISSING        |
-| .NET single-file bundle inspect/extract                                   | `22cab82`                                                       | Absent                                                                     | New artifact family on main                                                           | —                                                                                                                                                   | MISSING        |
-| CLI literal Markdown rendering                                            | `e124bdf`                                                       | Absent                                                                     | CLI output punctuation/attributes may differ                                          | —                                                                                                                                                   | MISSING        |
-| Undecodable symlink target bytes                                          | `34577eb`                                                       | Absent                                                                     | Firmware/Apple dylib symlink bytes may be dropped                                     | —                                                                                                                                                   | MISSING        |
-| Evidence storage publication limits                                       | `bf115be`                                                       | Absent                                                                     | Breaking evidence publication change on main                                          | —                                                                                                                                                   | MISSING        |
-| Debugger incomplete-cleanup typing                                        | `a108a1b`                                                       | Absent                                                                     | CLI debugger cleanup outcomes may differ                                              | —                                                                                                                                                   | MISSING        |
-| Bun standalone module graphs                                              | `8188497`                                                       | Absent                                                                     | New artifact family on main                                                           | —                                                                                                                                                   | MISSING        |
-| Skill pause-deadline docs                                                 | `bd37925`                                                       | Older skill docs                                                           | Doc only                                                                              | —                                                                                                                                                   | NOT APPLICABLE |
-| rea.tools website setup docs                                              | `d3ecf68`                                                       | Product README is this repo                                                | Intentional                                                                           | —                                                                                                                                                   | NOT APPLICABLE |
-| APK rotated-signer docs                                                   | `6fa48f2`                                                       | Product docs are this repo                                                 | Doc only                                                                              | —                                                                                                                                                   | NOT APPLICABLE |
-| Investigation projects                                                    | Not upstream                                                    | `src/application/investigationProject/`                                    | Fork-only                                                                             | Workflow + remaining-workflow source tests passed                                                                                                   | PASS           |
-| Next-command findings                                                     | Not upstream                                                    | `RemainingWorkflows.ts` names existing CLI commands                        | Reports inferred next `rea …` invocations; does not launch them                       | RemainingWorkflows + Workflow tests                                                                                                                 | PASS           |
-| Duplicate target reuse                                                    | —                                                               | `addProjectTarget`                                                         | Fork-only                                                                             | Workflow.test                                                                                                                                       | PASS           |
-| Completed-job cache reuse                                                 | —                                                               | `investigationCacheKey` includes `det=` and `fmt=`                         | Older keys do not match; `ev_format` must agree                                       | Workflow cache-identity tests                                                                                                                       | PASS           |
-| Stale-hash after import                                                   | —                                                               | `runInvestigationWorkflow`                                                 | Fork-only                                                                             | Workflow safety test                                                                                                                                | PASS           |
-| Schema version refusal                                                    | —                                                               | `parseInvestigationProject`                                                | Fork-only                                                                             | investigationProject.test                                                                                                                           | PASS           |
-| Evidence file persistence                                                 | —                                                               | `writeInvestigationEvidence`                                               | Fork-only                                                                             | Workflow.test writes `evidence/*.json`                                                                                                              | PASS           |
-| FAT prefix classification                                                 | `parseExecutableHeader` fails when slices are outside the probe | `formatRegistry.ts` names `mach-o-universal` and points at `inspect-macho` | 8 KiB probe no longer reports `/usr/bin/true` as unknown                              | `formatRegistry.test.ts` + CLI import of `/usr/bin/true`                                                                                            | PASS           |
-| Optional `REA_AI_*`                                                       | External agent via MCP upstream                                 | `AiProvider.ts` + Workflow env pass-through                                | Findings JSON to caller endpoint when enabled; key not in body                        | Local 127.0.0.1 HTTP + failure path (8 passed this increment)                                                                                       | PARTIAL        |
-| Package name `rea-agents`                                                 | Official npm                                                    | Same runtime name                                                          | README says not official publication                                                  | Collision check (npm 6.8.0 taken)                                                                                                                   | NOT APPLICABLE |
-| JS / Electron / .NET / Android / firmware / web / pcap / process / Python | Upstream adapters in `src/`                                     | Same snapshot                                                              | Prerequisites optional                                                                | Several MCP files passed unsandboxed; live engines still **not run**                                                                                | NOT TESTED     |
+## Command inventory
+
+Compared `src/cliCommandNames.ts` on this tree vs upstream
+`b1ff7cdacc03110d51bcac33da3cbb7850ac27fc`.
+
+| Set                      | Count                    |
+| ------------------------ | ------------------------ |
+| Shared one-shot commands | 179                      |
+| Only this tree           | 8 investigation commands |
+| Only upstream            | 1 (`guidance`)           |
+
+Only this tree: `init-project`, `import-target`, `inspect-target`,
+`analyze-project`, `generate-report`, `resume-job`, `list-plugins`,
+`project-status`.
+
+Only upstream: `guidance` (`src/cli/guidanceCommands.ts`,
+`src/application/GuidanceAccess.ts`, MCP `registerGuidanceTools.ts`).
+
+Package identity is **not independent**: both trees publish as `rea-agents`
+`6.8.0` / `mcpName` `io.github.morluto/rea`. Engines match
+`^22.23.4 \|\| ^24.22.1 \|\| >=26.12.1`.
+
+Test-file counts (`.test.ts` / `.test.mts`, excluding `node_modules` / `dist`):
+
+| Tree               | Test files |
+| ------------------ | ---------- |
+| This repository    | 2830       |
+| Upstream `b1ff7cd` | 2872       |
+
+File count is not mutation score, branch coverage, or scenario quality.
+
+## Capability matrix
+
+| Capability                                                          | Upstream                                          | This tree                                                    | Test                                                                            | Status         |
+| ------------------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------- | -------------- |
+| CLI one-shot inspect/analyze/decompile                              | 180 named commands                                | 179 shared + 8 investigation                                 | Investigation CLI tested; full CLI family not re-run this increment             | PARTIAL        |
+| `rea guidance` workflow search                                      | `c88e1b0`                                         | Absent                                                       | —                                                                               | MISSING        |
+| MCP tool catalog / stdio                                            | `src/server/`                                     | Same snapshot + later cancellation/JSON fixes                | Prior unsandboxed `test:mcp` had load-timeout flakes; not re-run this increment | PARTIAL        |
+| Evidence contract                                                   | `src/domain/evidence.ts` + later `bf115be` limits | Snapshot Evidence; publication-limit change absent           | Existing Evidence suite not re-run                                              | PARTIAL        |
+| Hopper / Ghidra / IDA / Kuna                                        | BYO engines                                       | Same snapshot                                                | Live engines not run. Hopper later commits `ec4a0a0`, `b1ff7cd` unported        | NOT TESTED     |
+| JADX / apktool / Frida / Rizin / objdump                            | matching `src/*`                                  | Same snapshot                                                | Live lanes not run                                                              | NOT TESTED     |
+| ADB PNG header + dash-safe fixture                                  | `f7cd4e5`                                         | Ported; Ubuntu `dash` stub writes owned PNG bytes            | `pngHeader`, `AdbProvider`, `adbSelectedLocalPaths` (incl. dash)                | MATCHED        |
+| ADB long-path push verify                                           | `1da304b`                                         | Absent                                                       | —                                                                               | MISSING        |
+| BinarySession cancel during retirement                              | `3503578`                                         | Ported                                                       | `gdbRetirementCancellation.test.ts`                                             | MATCHED        |
+| Native bookmark uncertainty                                         | `2b85a4a`                                         | Ported                                                       | `AnalysisContextQueries.test.ts`                                                | MATCHED        |
+| Native dispatch format refusals                                     | `e3d8d20`                                         | Ported                                                       | `AppleDispatchMetadata.failure.test.ts`                                         | MATCHED        |
+| Linux process-ownership on exit                                     | `01e00da`                                         | Ported                                                       | Linux live spawn skipped on Darwin                                              | MATCHED        |
+| Browser source-map declaration uncertainty                          | `1ef5918`                                         | Ported                                                       | CDP / `webCaptureDiff` tests                                                    | MATCHED        |
+| Mach-O per-slice encryption                                         | `860fdd8` `MachoEncryptionReader.ts`              | Absent                                                       | —                                                                               | MISSING        |
+| Mach-O literal segment name BOMs                                    | `da5ec6b`                                         | Absent                                                       | —                                                                               | MISSING        |
+| Mach-O target selection in macOS tools                              | `c0c3902`                                         | Absent                                                       | —                                                                               | MISSING        |
+| Native bundle directories (appex/framework/XPC)                     | `37342ec`                                         | Absent                                                       | —                                                                               | MISSING        |
+| .NET single-file bundle inspect/extract                             | `22cab82`                                         | Absent                                                       | —                                                                               | MISSING        |
+| Bun standalone module graphs                                        | `8188497`                                         | Absent                                                       | —                                                                               | MISSING        |
+| JS semantic-trace operator influence                                | `5c05eb8` breaking                                | Absent                                                       | —                                                                               | MISSING        |
+| Undecodable symlink target bytes                                    | `34577eb`                                         | Absent                                                       | —                                                                               | MISSING        |
+| CLI literal Markdown rendering                                      | `e124bdf`                                         | Absent                                                       | —                                                                               | MISSING        |
+| Evidence storage publication limits                                 | `bf115be` breaking                                | Absent                                                       | —                                                                               | MISSING        |
+| Debugger incomplete-cleanup typing                                  | `a108a1b`                                         | Absent                                                       | —                                                                               | MISSING        |
+| Debugger shared GDB/Rizin caps as `REA_` settings                   | `4a8d8f7`                                         | Absent                                                       | —                                                                               | MISSING        |
+| Environment write views (varied members, sorted creates)            | `131fbe0` `51ad845`                               | Absent                                                       | —                                                                               | MISSING        |
+| Environment MIME uncertainty                                        | `72039ec`                                         | Absent                                                       | —                                                                               | MISSING        |
+| CLI/MCP family-id registration                                      | `1c14f66`                                         | Snapshot registration                                        | Large contract refactor                                                         | MISSING        |
+| Unified artifact format registry                                    | `5f9187c`                                         | Snapshot registry + fork FAT prefix                          | Large refactor                                                                  | PARTIAL        |
+| Typed provider/admission/NativeAOT/Kuna codes                       | `b894be6` `317bf3f` `3b64713` `395b598`           | Snapshot codes                                               | Breaking / large                                                                | MISSING        |
+| Analysis-view inferred confidence                                   | `bfa082f`                                         | Snapshot                                                     | —                                                                               | MISSING        |
+| Flattened framework Info.plist                                      | `6d19649`                                         | Absent                                                       | —                                                                               | MISSING        |
+| Source-map empty `sourceRoot`                                       | `24398a8`                                         | Absent                                                       | —                                                                               | MISSING        |
+| HAR browser-serialized request URLs                                 | `c5f50e8`                                         | Absent                                                       | —                                                                               | MISSING        |
+| Electron IPC send ambiguity                                         | `81378ef`                                         | Absent                                                       | —                                                                               | MISSING        |
+| FIT leading U+FEFF property strings                                 | `d77104d`                                         | Absent                                                       | —                                                                               | MISSING        |
+| Apple XML plist decoder DOM charge                                  | `cce3314`                                         | Absent                                                       | —                                                                               | MISSING        |
+| Desktop retained-row charging                                       | `0ce76e7`                                         | Absent                                                       | —                                                                               | MISSING        |
+| JS self-defaulted receivers / member-effect index                   | `9d68aac` `a47dcca` `767f6af`                     | Absent                                                       | —                                                                               | MISSING        |
+| Hopper caller reconcile / demo-dialog                               | `ec4a0a0` `b1ff7cd`                               | Absent                                                       | Needs Hopper                                                                    | MISSING        |
+| Investigation projects                                              | Not upstream                                      | `src/application/investigationProject/`                      | Workflow + CLI tests                                                            | MATCHED        |
+| Job lifecycle queued/running/completed/failed/interrupted/cancelled | Not upstream                                      | `INVESTIGATION_JOB_STATUSES`                                 | Workflow tests                                                                  | PARTIAL        |
+| Reports Markdown + JSON                                             | Not upstream                                      | `ReportWriter.ts`                                            | Workflow tests                                                                  | PARTIAL        |
+| Reports HTML/PDF/CSV/version-diff/timeline                          | Not upstream                                      | Absent                                                       | —                                                                               | MISSING        |
+| Project import/export, backup/restore, versioning                   | Not upstream                                      | Absent                                                       | —                                                                               | MISSING        |
+| Multi-hash targets, target compare, evidence graph                  | Not upstream                                      | SHA-256 + duplicate reuse only                               | Workflow tests                                                                  | PARTIAL        |
+| Optional `REA_AI_*`                                                 | External agent via MCP                            | `AiProvider.ts`                                              | Local HTTP tests                                                                | PARTIAL        |
+| Independent npm / MCP identity                                      | Official `rea-agents`                             | Same identifiers; release proposal blocked off `morluto/rea` | Authority unit test                                                             | NOT APPLICABLE |
 
 ## Artifact / provider matrix
 
-| Artifact family                 | Implementation                                  | Prerequisites                              | Evidence this increment                                                                | Status     |
-| ------------------------------- | ----------------------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------- | ---------- |
-| Native binaries / decompilation | Snapshot adapters + builtin-static project path | Hopper / Ghidra / IDA / Kuna for decompile | Unsandboxed native Mach-O MCP passed. Deep decompilers not installed                   | PARTIAL    |
-| JavaScript / Electron           | Snapshot adapters                               | Optional browser / Electron                | Unsandboxed JS MCP files passed. Semantic-trace operator influence still missing       | NOT TESTED |
-| .NET                            | Snapshot managed adapters                       | Optional                                   | Managed MCP passed. Single-file bundle extract (`22cab82`) is missing                  | NOT TESTED |
-| Android                         | Snapshot APK/DEX/JADX/ADB                       | JADX / ADB optional                        | ADB MCP tests passed in the full suite; live device **not used**                       | NOT TESTED |
-| Firmware                        | Snapshot ESP/FIT/uImage readers                 | None for static readers                    | `firmwareMcp.test.ts` skipped in this run                                              | NOT TESTED |
-| Websites                        | Snapshot browser / website adapters             | Playwright / browser                       | Source-map uncertainty ported and CLI-tested. Live site capture **not run**            | PARTIAL    |
-| Network captures                | Snapshot pcap adapters                          | None for static readers                    | Unsandboxed pcap MCP passed                                                            | NOT TESTED |
-| Runtime observation             | Frida / process / GDB                           | Explicit opt-in tools                      | Frida MCP and GDB retirement-cancellation tests passed. Live attach **not run**        | NOT TESTED |
-| Packaged Python                 | Snapshot pyc inspector                          | None for static pyc                        | `pythonPycMcp.test.ts` passed in the full suite                                        | NOT TESTED |
-| Mach-O inspect                  | Snapshot `inspect_macho`                        | Host `lipo` / codesign                     | Unsandboxed `nativeMachoSummaryMcp.test.ts` passed. Per-slice encryption still missing | PARTIAL    |
+| Artifact family                 | Implementation                                    | Prerequisites                | Status     |
+| ------------------------------- | ------------------------------------------------- | ---------------------------- | ---------- |
+| Native binaries / decompilation | Snapshot adapters + builtin-static project path   | Hopper / Ghidra / IDA / Kuna | PARTIAL    |
+| JavaScript / Electron           | Snapshot adapters                                 | Optional browser / Electron  | PARTIAL    |
+| .NET                            | Snapshot managed adapters; no single-file bundles | Optional                     | PARTIAL    |
+| Android                         | Snapshot APK/DEX/JADX/ADB                         | JADX / ADB optional          | PARTIAL    |
+| Firmware                        | Snapshot ESP/FIT/uImage readers                   | None for static readers      | PARTIAL    |
+| Websites                        | Snapshot browser adapters                         | Playwright / browser         | PARTIAL    |
+| Network captures                | Snapshot pcap adapters                            | None for static readers      | NOT TESTED |
+| Runtime observation             | Frida / process / GDB                             | Explicit opt-in              | NOT TESTED |
+| Packaged Python                 | Snapshot pyc inspector                            | None for static pyc          | NOT TESTED |
+| Mach-O inspect                  | Snapshot `inspect_macho`; no slice encryption     | Host `lipo` / codesign       | PARTIAL    |
+| Bun standalone                  | Upstream only                                     | None for static reader       | MISSING    |
 
 ## Counts (this matrix)
 
-Previous increment: PASS 13 · PARTIAL 4 · MISSING 8 · BROKEN 0 · NOT TESTED 4 ·
-NOT APPLICABLE 4.
-
 | Status         | Count |
 | -------------- | ----- |
-| PASS           | 13    |
-| PARTIAL        | 4     |
-| MISSING        | 11    |
+| MATCHED        | 7     |
+| PARTIAL        | 16    |
+| MISSING        | 32    |
 | BROKEN         | 0     |
-| NOT TESTED     | 4     |
-| NOT APPLICABLE | 4     |
+| NOT TESTED     | 5     |
+| NOT APPLICABLE | 1     |
 
-Do not read these counts as “this fork is better than upstream.” PASS rows are
-mostly fork-only investigation features plus five ports from `main`. Upstream
-`main` is now ahead 40. The MISSING count rose because newer functional
-commits were recorded, not because previously passing rows regressed.
+MISSING rose because upstream moved from 40 to 56 commits ahead, not because
+previously MATCHED rows regressed. Phase 1 acceptance (“no relevant MISSING”)
+is **not met**.
 
 ## Intentional differences
 
 - Product README describes this GitHub repository, not rea.tools.
 - Investigation CLI does not launch deep engines or the target.
-- `analyze-project` records inferred next commands for existing inspectors; it
-  does not execute `inspect`, `analyze`, `decompile`, or objdump.
+- `analyze-project` records inferred next commands; it does not execute
+  `inspect`, `analyze`, `decompile`, or objdump.
 - Runtime identifiers stay `rea-agents` / `io.github.morluto/rea` until the
   owner chooses an independent distribution name.
+- Official `rea-agents` release-please proposals are blocked unless
+  `GITHUB_REPOSITORY` is `morluto/rea`.
+- Website-only and skill-pause documentation commits are not copied.
+
+## Six-category snapshot (not a win declaration)
+
+| Category                    | Upstream                                             | This tree                                         | Result                                                 |
+| --------------------------- | ---------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------ |
+| 1. Feature breadth          | 56 commits ahead; `guidance` + new artifact families | 8 investigation commands                          | **Upstream ahead**                                     |
+| 2. Specialized RE           | New Mach-O/Bun/.NET/JS/Apple/HAR/FIT work            | Snapshot + ADB/Zstd/CI fixes                      | **Upstream ahead**                                     |
+| 3. Persistent investigation | None                                                 | Projects, jobs, evidence files, resume            | **This tree ahead**                                    |
+| 4. Report workflow          | Evidence export tools                                | JSON + Markdown only                              | **This tree ahead, incomplete**                        |
+| 5. Release maturity         | Official package + provenance                        | Same identity; public-source docs; proposal guard | **Neither production-ready as an independent package** |
+| 6. Test coverage            | 2872 test files; newer scenario tests                | 2830 files + investigation tests                  | **Upstream ahead on file count; quality not measured** |

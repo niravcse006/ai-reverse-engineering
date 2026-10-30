@@ -1,5 +1,7 @@
 # REA roadmap
 
+> Sequenced port and investigation work: [IMPLEMENTATION_ROADMAP.md](IMPLEMENTATION_ROADMAP.md).
+
 The [platform tracker](https://github.com/morluto/rea/issues/32),
 [process/Hopper tracker](https://github.com/morluto/rea/issues/48), and
 [browser tracker](https://github.com/morluto/rea/issues/39) track capability and

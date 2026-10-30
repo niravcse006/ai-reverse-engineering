@@ -9,9 +9,8 @@ projects. Ratings use demonstrated value in this repository, not marketing
 pages.
 
 This working copy is **not** declared better than
-[morluto/rea](https://github.com/morluto/rea). On 2026-10-29 upstream `main`
-(`d3ecf68`) was 8 commits ahead of the imported snapshot `17ceb77`. Use
-[VERIFICATION_CHECKLIST.md](VERIFICATION_CHECKLIST.md) as the scorecard.
+[morluto/rea](https://github.com/morluto/rea). Live SHAs and statuses are in
+[UPSTREAM_PARITY.md](UPSTREAM_PARITY.md) (upstream `main` `b1ff7cd`, ahead 56).
 
 Legend: **Y** implemented here or in upstream REA, **O** optional backend,
 **P** planned/deferred, **N** absent or rejected.
