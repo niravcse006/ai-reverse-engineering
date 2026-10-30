@@ -33,7 +33,8 @@ and it is **open**.
 Implement only when each item can keep Evidence, cancellation, and malformed
 input ownership.
 
-1. `rea guidance` + MCP guidance tools (`c88e1b0`).
+1. `rea guidance` + MCP guidance tools (`c88e1b0`) — **done this increment**;
+   see [UPSTREAM_PARITY.md](UPSTREAM_PARITY.md).
 2. Mach-O per-slice encryption (`860fdd8`).
 3. Mach-O segment-name BOM preservation (`da5ec6b`).
 4. Mach-O target selection for macOS tools (`c0c3902`).
@@ -132,5 +133,6 @@ Blocked on an explicit identity decision. Until then:
 
 ## Immediate next action
 
-Start Phase 1 wave A item 1 (`guidance`) **only after** this inventory is
-accepted. No commit or push in this increment.
+Wave A item 1 (`guidance`) is implemented in this increment. Next isolated
+item is Mach-O per-slice encryption (`860fdd8`). Do not start it in the
+same change. No commit or push unless the owner asks.

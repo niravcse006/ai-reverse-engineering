@@ -64,6 +64,30 @@ analysis-only time. The flag is off by default, and the record omits stages
 that REA did not measure. Root version reporting does not dispatch a command
 and has no command timing record.
 
+## Search installed workflow guidance
+
+`rea guidance` searches the installed REA skill bundle. It is not a static help
+dump: every non-generic query word must appear in a section, and a match
+returns a locator rather than the full text. `guided-workflows` remains the
+command that lists or renders prompt contracts.
+
+```bash
+rea guidance --query "exact JavaScript module" --json
+rea guidance --query "module" --limit 1 --json
+rea guidance --query "module" --limit 1 --cursor '<next_cursor>' --json
+rea guidance --action read --locator '<locator>' --json
+```
+
+`--query` is required for search. `--locator` is required for `--action read`
+and is refused on search. Empty queries, unknown locators, and
+search-only flags on read fail with field-path errors. A generic-only query
+returns `status: "no_matches"`; that does not mean an analysis capability is
+absent. Results are documentation from the installed package, not target
+Evidence.
+
+MCP callers use `search_guidance` and `read_guidance_section` with the same
+contracts. See [guided MCP prompts](mcp-prompts.md).
+
 ## JSON Lines record output
 
 Use `--format jsonl` to consume row-oriented results one record per line:

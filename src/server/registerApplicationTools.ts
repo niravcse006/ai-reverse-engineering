@@ -11,6 +11,7 @@ import { registerReconstructionObligationLedgerTool } from "./registerApplicatio
 import { registerProjectMobileApplicationGraphTools } from "./registerApplicationTools/projectMobileApplicationGraph.js";
 import type { ApplicationToolRegistration } from "./registerApplicationTools/types.js";
 import { registerGuidedWorkflowTool } from "./registerGuidedWorkflowTool.js";
+import { registerGuidanceTools } from "./registerGuidanceTools.js";
 
 /** Register provider-neutral JavaScript application graph workflows. */
 export const registerApplicationTools = (
@@ -18,6 +19,11 @@ export const registerApplicationTools = (
   options: ApplicationToolRegistration,
 ): void => {
   registerGuidedWorkflowTool(server);
+  if (options.artifactResources === undefined)
+    throw new Error(
+      "registerApplicationTools requires artifactResources for guidance tools",
+    );
+  registerGuidanceTools(server, options.artifactResources);
   registerTraceFeatureTool(server, options);
   registerTraceJavaScriptSemanticsTool(server, options);
   registerCompareApplicationVersionsTool(server, options);

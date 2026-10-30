@@ -9,7 +9,7 @@ This is a file-count inventory, not a coverage or mutation scorecard.
 | --------------------------------------------------- | ----------------------------------------------- | --------------------------- | ---------------------------------- |
 | `*.test.ts` / `*.test.mts` files                    | 2830                                            | 2872                        | Excludes `node_modules` and `dist` |
 | Investigation-project tests                         | Present (`Workflow`, `RemainingWorkflows`, CLI) | Absent                      | Fork-only                          |
-| Guidance / Bun standalone / Mach-O encryption tests | Absent                                          | Present                     | Unported families                  |
+| Guidance / Bun standalone / Mach-O encryption tests | Guidance present; Bun/Mach-O encryption absent  | Present                     | Guidance ported this increment     |
 | Statement / branch / function coverage %            | Not measured this increment                     | Not measured this increment | Do not invent percentages          |
 | Mutation score                                      | Not measured this increment                     | Not measured this increment | Use later on critical modules      |
 | Cross-platform live engines                         | Documented as BYO; not run here                 | Same model                  | Hopper/Ghidra/IDA remain unproven  |

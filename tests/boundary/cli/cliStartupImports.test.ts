@@ -19,6 +19,10 @@ const DEFERRED_IMPORTS = [
     path: "/dist/application/GuidedWorkflowAccess.js",
   },
   {
+    name: "guidance",
+    path: "/dist/application/GuidanceAccess.js",
+  },
+  {
     name: "direct-analysis",
     path: "/dist/application/DirectAnalysis.js",
   },

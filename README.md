@@ -257,9 +257,10 @@ security certification.
 - Package and MCP identities are still `rea-agents` / `io.github.morluto/rea`.
 - Full `npm test` and `check:pr` have not been completed on this fork as a
   release gate. Latest `npm run test:mcp` still exits 1 under load.
-- Current upstream `main` is ahead 40; several capabilities are unported
-  (guidance, environment write views, Mach-O encryption, .NET single-file
-  bundles, JS operator-influence traces, symlink-target bytes).
+- Current upstream `main` is still ahead on several artifact families
+  (environment write views, Mach-O encryption, .NET single-file bundles,
+  JS operator-influence traces, symlink-target bytes). `rea guidance` and
+  MCP `search_guidance` / `read_guidance_section` are implemented here.
 - Investigation commands are CLI-only.
 - Live commercial engines and external AI providers are not claimed as verified.
 

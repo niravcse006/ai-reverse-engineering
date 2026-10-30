@@ -11,6 +11,12 @@ for the opt-in HTTP listener, [cancellation](#progress-and-cancellation)
 for partial-result recovery and [first-query deadlines](#ghidra-first-query-deadlines-and-recovery)
 when a cold provider exceeds the client's wait.
 
+Provider-free documentation search is `search_guidance` and
+`read_guidance_section`. They index the installed skill bundle, return
+locators, and read one section. They do not inspect a target or change
+session state. See [guided MCP prompts](mcp-prompts.md) and
+[CLI guidance](cli.md#search-installed-workflow-guidance).
+
 ## Tool results
 
 Evidence-producing tools return the complete canonical Evidence record in both

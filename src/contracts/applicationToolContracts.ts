@@ -31,6 +31,12 @@ import {
   guidedWorkflowsInputSchema,
   guidedWorkflowsOutputSchema,
 } from "./guidedWorkflowSchemas.js";
+import {
+  readGuidanceSectionInputSchema,
+  readGuidanceSectionOutputSchema,
+  searchGuidanceInputSchema,
+  searchGuidanceOutputSchema,
+} from "./guidanceContracts.js";
 import { evidenceResultOf } from "./toolOutputSchemaPrimitives.js";
 import {
   JAVASCRIPT_APPLICATION_VERSION_COMPARISON_EXAMPLE,
@@ -93,6 +99,36 @@ export const APPLICATION_TOOL_CONTRACTS = [
           workflow_id: "investigate_feature",
           arguments: { feature: "offline search" },
         },
+      },
+    ],
+  },
+  {
+    name: "search_guidance",
+    ...toolContractMetadata("search_guidance"),
+    description:
+      "Search the installed REA workflow guidance. Search returns locators only; it does not inspect targets, begin analysis, or change session state.",
+    kind: "application",
+    inputSchema: searchGuidanceInputSchema,
+    outputSchema: searchGuidanceOutputSchema,
+    examples: [
+      {
+        title: "Search for JavaScript module guidance",
+        input: { query: "exact JavaScript module" },
+      },
+    ],
+  },
+  {
+    name: "read_guidance_section",
+    ...toolContractMetadata("read_guidance_section"),
+    description:
+      "Read one installed REA guidance section by locator. Reading returns documentation only; it does not inspect targets, begin analysis, or change session state.",
+    kind: "application",
+    inputSchema: readGuidanceSectionInputSchema,
+    outputSchema: readGuidanceSectionOutputSchema,
+    examples: [
+      {
+        title: "Read a locator returned by search_guidance",
+        input: { locator: "rea-guide-v1.example" },
       },
     ],
   },

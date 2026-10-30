@@ -12,6 +12,15 @@ render one. Both paths use the same contracts and renderer as native prompts;
 rendering returns guidance only and does not inspect a target, start analysis,
 or change session state.
 
+To search the installed skill bundle itself, use `search_guidance` with a
+lexical query, then `read_guidance_section` with a locator from that search.
+Every non-generic query word must occur in the section. Generic-only queries
+and unknown subjects return `no_matches`; that does not report whether an
+analysis tool exists. CLI callers use `rea guidance --query …` and
+`rea guidance --action read --locator …`. These tools do not replace
+`guided_workflows`; they index packaged documentation rather than render
+prompt contracts.
+
 The list contains workflow identifiers, descriptions, and argument requirements;
 render returns only the selected workflow's text. Unknown argument names and
 non-string values are rejected with field paths. `action: "list"` accepts no

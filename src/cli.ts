@@ -80,9 +80,21 @@ import { rejectSurplusCliArguments } from "./cli/strictPositionals.js";
 import { presentCliArgumentErrors } from "./cli/argumentErrors.js";
 import { completionHelpNote, createCliCompletions } from "./cli/completions.js";
 import { registerGuidedWorkflowCommands } from "./cli/guidedWorkflowCommands.js";
+import {
+  closeCliGuidanceResources,
+  registerGuidanceCommands,
+} from "./cli/guidanceCommands.js";
 import { registerInvestigationProjectCommands } from "./cli/investigationProjectCommands.js";
+import { closeCliJavaScriptResources } from "./cli/javascriptApplicationAnalysis.js";
 
 export { closeCliJavaScriptResources } from "./cli/javascriptApplicationAnalysis.js";
+export { closeCliGuidanceResources } from "./cli/guidanceCommands.js";
+
+/** Release CLI-owned process resources, retaining failed cleanup for retry. */
+export const closeCliResources = async (): Promise<void> => {
+  await closeCliJavaScriptResources();
+  await closeCliGuidanceResources();
+};
 
 /**
  * Build the one-shot Incur CLI without starting Hopper at import time.
@@ -156,6 +168,7 @@ export const createCli = (
   registerSetupCommands(cli, logger, environment);
   registerInvestigationProjectCommands(cli, logger, environment);
   registerGuidedWorkflowCommands(cli, logger);
+  registerGuidanceCommands(cli, logger);
   registerReverseEngineeringCommands(cli, logger, environment);
   registerCutterCommands(cli, logger, environment);
   registerCoreAnalysisCommands(
