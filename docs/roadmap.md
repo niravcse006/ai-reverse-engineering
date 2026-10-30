@@ -18,15 +18,15 @@ include that track and the original upstream work.
 Track these as a checklist in [VERIFICATION_CHECKLIST.md](VERIFICATION_CHECKLIST.md).
 Do not add engines or live AI until parity and disclosure items close.
 
-| Item | Status | Acceptance | Dependencies | Risks |
-| --- | --- | --- | --- | --- |
-| Preserve upstream CLI/MCP/Evidence | Preserved at snapshot `17ceb77` | Existing commands still registered | None | Upstream `main` is 8 commits ahead |
-| Import upstream commits since the snapshot | Remaining | Guidance, environment writes, session cancellation, ADB PNG, native bookmark/dispatch present or explicitly skipped | GitHub compare | Merge conflicts in CLI/contracts |
-| Investigation project + static workflow | Implemented | `analyze-project` writes reports; tests pass | Node 22+ | Full upstream suite not run here |
-| Format diagnostics for empty/unknown | Implemented | Tests cover empty, ELF, PE, ZIP, WASM, JS | Domain parsers | Header-only probe |
-| Backend unavailable reporting | Partial | Probe reports missing tools; remaining-workflow text still thin | PATH/env | Probe does not execute tools |
-| Security docs and no auto-exec | Partial | Dynamic stage skipped; AI disclosure is config, not an explicit send prompt | None | Residual same-user process risk |
-| Regenerate catalogs after compile | Remaining | `npm run metadata:check` and docs checks pass | `npm run compile` | Large build |
+| Item                                       | Status                          | Acceptance                                                                                                          | Dependencies      | Risks                              |
+| ------------------------------------------ | ------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------------- | ---------------------------------- |
+| Preserve upstream CLI/MCP/Evidence         | Preserved at snapshot `17ceb77` | Existing commands still registered                                                                                  | None              | Upstream `main` is 8 commits ahead |
+| Import upstream commits since the snapshot | Remaining                       | Guidance, environment writes, session cancellation, ADB PNG, native bookmark/dispatch present or explicitly skipped | GitHub compare    | Merge conflicts in CLI/contracts   |
+| Investigation project + static workflow    | Implemented                     | `analyze-project` writes reports; tests pass                                                                        | Node 22+          | Full upstream suite not run here   |
+| Format diagnostics for empty/unknown       | Implemented                     | Tests cover empty, ELF, PE, ZIP, WASM, JS                                                                           | Domain parsers    | Header-only probe                  |
+| Backend unavailable reporting              | Partial                         | Probe reports missing tools; remaining-workflow text still thin                                                     | PATH/env          | Probe does not execute tools       |
+| Security docs and no auto-exec             | Partial                         | Dynamic stage skipped; AI disclosure is config, not an explicit send prompt                                         | None              | Residual same-user process risk    |
+| Regenerate catalogs after compile          | Remaining                       | `npm run metadata:check` and docs checks pass                                                                       | `npm run compile` | Large build                        |
 
 ### P1 — high value
 

@@ -14,16 +14,16 @@ instead.
 
 ## Recorded Git state
 
-| Item | Value | Verification |
-| --- | --- | --- |
-| Upstream repository | https://github.com/morluto/rea | Fetched README, installation docs, and GitHub commit API |
-| Upstream commit | `17ceb77ca5f2632faab8de01da4babff680eac48` | GitHub commits API for `main` |
-| Upstream commit date | 2026-10-29T07:39:10Z | Same API response |
-| Upstream subject | `fix(mcp): preserve input validation issue attribution (#7981)` | Same API response |
-| Published package | `rea-agents@6.8.0` | `package.json` and `src/generatedPackageMetadata.ts` |
-| Local repository | `/Users/niravsoni/Projects/rea` | Created with an empty `main` branch, then populated from the archive |
-| Local HEAD | none at import time | `git log` reported no commits |
-| Working-tree origin | archive snapshot plus later local edits | No upstream `.git` history was imported |
+| Item                 | Value                                                           | Verification                                                         |
+| -------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Upstream repository  | https://github.com/morluto/rea                                  | Fetched README, installation docs, and GitHub commit API             |
+| Upstream commit      | `17ceb77ca5f2632faab8de01da4babff680eac48`                      | GitHub commits API for `main`                                        |
+| Upstream commit date | 2026-10-29T07:39:10Z                                            | Same API response                                                    |
+| Upstream subject     | `fix(mcp): preserve input validation issue attribution (#7981)` | Same API response                                                    |
+| Published package    | `rea-agents@6.8.0`                                              | `package.json` and `src/generatedPackageMetadata.ts`                 |
+| Local repository     | `/Users/niravsoni/Projects/rea`                                 | Created with an empty `main` branch, then populated from the archive |
+| Local HEAD           | none at import time                                             | `git log` reported no commits                                        |
+| Working-tree origin  | archive snapshot plus later local edits                         | No upstream `.git` history was imported                              |
 
 ## How the original application works
 
@@ -86,12 +86,12 @@ Not present in the original tree:
 
 This environment at assessment time:
 
-| Tool | Result |
-| --- | --- |
-| Node 22.23.4 via nvm | Available and used |
-| Default shell Node | 18.20.8, below REA's engines range |
-| Ghidra, radare2, rizin | Not on PATH |
-| Python 3.9.6 | Present; used by some bridge tests when invoked |
+| Tool                   | Result                                          |
+| ---------------------- | ----------------------------------------------- |
+| Node 22.23.4 via nvm   | Available and used                              |
+| Default shell Node     | 18.20.8, below REA's engines range              |
+| Ghidra, radare2, rizin | Not on PATH                                     |
+| Python 3.9.6           | Present; used by some bridge tests when invoked |
 
 ## Test baseline
 
@@ -115,13 +115,13 @@ A representative existing domain test file, `src/domain/binaryTarget.test.ts`, w
 
 ## Technical debt and gaps addressed here
 
-| Gap | Decision |
-| --- | --- |
-| No project/job persistence | Added `src/application/investigationProject/` |
-| No report dossier | Added Markdown/JSON investigation reports |
-| AI lives only outside REA | Added an optional, disabled-by-default provider interface |
-| Plugin ABI | Rejected a loader; added metadata validation only |
-| angr / FLOSS / RetDec / MobSF | Documented; not vendored |
+| Gap                           | Decision                                                  |
+| ----------------------------- | --------------------------------------------------------- |
+| No project/job persistence    | Added `src/application/investigationProject/`             |
+| No report dossier             | Added Markdown/JSON investigation reports                 |
+| AI lives only outside REA     | Added an optional, disabled-by-default provider interface |
+| Plugin ABI                    | Rejected a loader; added metadata validation only         |
+| angr / FLOSS / RetDec / MobSF | Documented; not vendored                                  |
 
 ## Features that must remain unchanged
 

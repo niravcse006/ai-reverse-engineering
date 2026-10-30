@@ -41,13 +41,13 @@ Migration plan (future, not executed):
 
 ## Next increments (still open)
 
-| Priority | Item | Why it is still open |
-| --- | --- | --- |
-| P0 | Import guidance + environment-write + BinarySession + native fixes | Large, needs their tests; not copied blindly |
-| P0 | Attach existing inspect/decompile Evidence to jobs | Requires a documented hand-off, not a second evidence model |
-| P1 | Real-provider lanes | No Ghidra/IDA/Hopper in this workspace |
-| P1 | Full `npm run check:pr` | Time/memory; not claimed |
-| P2 | Enforce live token accounting against a real provider | No live call was made |
+| Priority | Item                                                               | Why it is still open                                        |
+| -------- | ------------------------------------------------------------------ | ----------------------------------------------------------- |
+| P0       | Import guidance + environment-write + BinarySession + native fixes | Large, needs their tests; not copied blindly                |
+| P0       | Attach existing inspect/decompile Evidence to jobs                 | Requires a documented hand-off, not a second evidence model |
+| P1       | Real-provider lanes                                                | No Ghidra/IDA/Hopper in this workspace                      |
+| P1       | Full `npm run check:pr`                                            | Time/memory; not claimed                                    |
+| P2       | Enforce live token accounting against a real provider              | No live call was made                                       |
 
 ## Acceptance for later PRs
 

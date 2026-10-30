@@ -8,12 +8,12 @@ executes the file.
 
 ## Deep providers (optional)
 
-| Id | Configuration | Notes |
-| --- | --- | --- |
+| Id     | Configuration          | Notes                                                      |
+| ------ | ---------------------- | ---------------------------------------------------------- |
 | hopper | `HOPPER_LAUNCHER_PATH` | Proprietary; see [installation.md](installation.md#hopper) |
-| ghidra | `GHIDRA_INSTALL_DIR` | See [ghidra-provider.md](ghidra-provider.md) |
-| ida | `REA_IDA_MCP_CONFIG` | See [ida-provider.md](ida-provider.md) |
-| kuna | `REA_KUNA_COMMAND` | See [kuna-provider.md](kuna-provider.md) |
+| ghidra | `GHIDRA_INSTALL_DIR`   | See [ghidra-provider.md](ghidra-provider.md)               |
+| ida    | `REA_IDA_MCP_CONFIG`   | See [ida-provider.md](ida-provider.md)                     |
+| kuna   | `REA_KUNA_COMMAND`     | See [kuna-provider.md](kuna-provider.md)                   |
 
 `probeAnalysisBackends` only checks that configured paths exist. It does not
 start those programs. A missing path is reported as unavailable.

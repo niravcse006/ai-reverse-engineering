@@ -13,6 +13,27 @@ const patch = fileURLToPath(
   new URL("../../patches/release-please+17.3.0.patch", import.meta.url),
 );
 
+const OFFICIAL_REA_REPOSITORY = "morluto/rea";
+const OFFICIAL_PACKAGE_NAME = "rea-agents";
+
+/**
+ * Refuse to open a release-please PR that would publish as official
+ * `rea-agents` from any other GitHub repository.
+ */
+export function releaseProposalAuthority({ repository, packageName }) {
+  if (
+    packageName === OFFICIAL_PACKAGE_NAME &&
+    repository !== OFFICIAL_REA_REPOSITORY
+  ) {
+    return {
+      allowed: false,
+      reason:
+        "Automatic release-please proposal is blocked: this repository is not the official rea-agents publisher.",
+    };
+  }
+  return { allowed: true };
+}
+
 export async function applyReleasePleasePatch(
   directory = dirname(require.resolve("release-please/package.json")),
 ) {

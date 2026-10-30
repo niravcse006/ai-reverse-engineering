@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 import { execFile } from "node:child_process";
-import { appendFile } from "node:fs/promises";
+import { appendFile, readFile } from "node:fs/promises";
 import { parseArgs, promisify } from "node:util";
+import { fileURLToPath } from "node:url";
 import {
   applyReleasePleasePatch,
+  releaseProposalAuthority,
   releaseProposalSearchDepth,
 } from "./lib/release-proposal.mjs";
 
@@ -25,6 +27,24 @@ async function main() {
     !values["target-branch"]
   ) {
     throw new Error("Expected GITHUB_REPOSITORY, GH_TOKEN and --target-branch");
+  }
+  const packageName = JSON.parse(
+    await readFile(
+      fileURLToPath(new URL("../package.json", import.meta.url)),
+      "utf8",
+    ),
+  ).name;
+  const authority = releaseProposalAuthority({ repository, packageName });
+  if (!authority.allowed) {
+    process.stdout.write(`${authority.reason}\n`);
+    if (process.env.GITHUB_STEP_SUMMARY)
+      await appendFile(
+        process.env.GITHUB_STEP_SUMMARY,
+        `${authority.reason}\n`,
+      );
+    if (process.env.GITHUB_OUTPUT)
+      await appendFile(process.env.GITHUB_OUTPUT, "prs_created=false\n");
+    return;
   }
   const depth = await releaseProposalSearchDepth(
     async (command, args) =>

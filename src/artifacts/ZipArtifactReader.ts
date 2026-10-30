@@ -1,6 +1,12 @@
 import { assertArtifactReadActive } from "./ArtifactFileOperation.js";
 import type { FileHandle } from "node:fs/promises";
-import { Duplex, PassThrough, type Readable } from "node:stream";
+import {
+  compose,
+  Duplex,
+  PassThrough,
+  Transform,
+  type Readable,
+} from "node:stream";
 import { once } from "node:events";
 import { constants, createZstdDecompress } from "node:zlib";
 
@@ -46,6 +52,7 @@ import {
 import type { StableRegularFileDescriptor } from "../filesystem/RegularFile.js";
 import { ArtifactFileSource } from "./ArtifactFileSource.js";
 import { readFileHandleRange } from "../filesystem/readFileHandleRange.js";
+import { inspectZstdFrame } from "../compression/zstdFrame.js";
 
 const ZIP_UTF8_DECODER = new TextDecoder("utf-8", {
   fatal: true,
@@ -58,13 +65,32 @@ class ZipZstandardDecompressionStream {
   readonly writable;
 
   constructor(_format: string, options?: DecompressionStreamOptions) {
-    const stream = Duplex.toWeb(
-      createZstdDecompress({
-        chunkSize: options?.chunkSize,
-        // Match the existing ELF/GPU Zstandard decoder's 128 MiB window cap.
-        params: { [constants.ZSTD_d_windowLogMax]: 27 },
-      }),
-    );
+    const native = createZstdDecompress({
+      chunkSize: options?.chunkSize,
+      // Match the existing ELF/GPU Zstandard decoder's 128 MiB window cap.
+      params: { [constants.ZSTD_d_windowLogMax]: 27 },
+    });
+    const collected: Buffer[] = [];
+    const validator = new Transform({
+      transform(chunk, _encoding, callback) {
+        collected.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+        callback(null, chunk);
+      },
+      flush(callback) {
+        // Node 22 may finish a truncated frame without error. Leave reserved
+        // and foreign frames to the native decoder so its fault cause remains.
+        if (inspectZstdFrame(Buffer.concat(collected)).kind === "truncated") {
+          callback(
+            Object.assign(new Error(ERR_INVALID_COMPRESSED_DATA), {
+              code: "Z_BUF_ERROR",
+            }),
+          );
+          return;
+        }
+        callback();
+      },
+    });
+    const stream = Duplex.toWeb(compose(validator, native));
     this.readable = stream.readable;
     this.writable = stream.writable;
   }

@@ -1,4 +1,7 @@
-import { claimsExecutableHeader, parseExecutableHeader } from "./binaryTarget.js";
+import {
+  claimsExecutableHeader,
+  parseExecutableHeader,
+} from "./binaryTarget.js";
 import { hasZipSignature, zipRootPackageFormat } from "./zipPackageFormat.js";
 import { err, ok, type Result } from "./result.js";
 
@@ -67,12 +70,7 @@ const detection = (
   supported: extras.supported ?? (format !== "unknown" && format !== "empty"),
 });
 
-const javascriptExtensions = new Set([
-  ".js",
-  ".mjs",
-  ".cjs",
-  ".jsx",
-]);
+const javascriptExtensions = new Set([".js", ".mjs", ".cjs", ".jsx"]);
 const typescriptExtensions = new Set([".ts", ".tsx", ".mts", ".cts"]);
 
 /**

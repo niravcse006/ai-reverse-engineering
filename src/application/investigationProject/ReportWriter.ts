@@ -23,7 +23,13 @@ export const writeInvestigationReports = async (
       new AnalysisInputError(
         "generate_report",
         { userMessage: "Job id contains unsupported characters." },
-        [{ path: ["job_id"], reason: "invalid_format", message: "Use a safe job id." }],
+        [
+          {
+            path: ["job_id"],
+            reason: "invalid_format",
+            message: "Use a safe job id.",
+          },
+        ],
       ),
     );
   const paths = investigationProjectPaths(projectRoot);
@@ -41,7 +47,10 @@ export const writeInvestigationReports = async (
       ),
     );
   await mkdir(paths.reports, { recursive: true, mode: 0o700 });
-  await writeFileAtomic(jsonPath, contents.json, { encoding: "utf8", mode: 0o600 });
+  await writeFileAtomic(jsonPath, contents.json, {
+    encoding: "utf8",
+    mode: 0o600,
+  });
   await writeFileAtomic(markdownPath, contents.markdown, {
     encoding: "utf8",
     mode: 0o600,

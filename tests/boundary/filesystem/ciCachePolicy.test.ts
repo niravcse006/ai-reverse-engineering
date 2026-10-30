@@ -336,13 +336,13 @@ printf '%s\n' 'C:\Users\runner with spaces\AppData\Local\npm-cache'
       'cache_key="npm-download-${RUNNER_OS}-${runtime_arch}-${LOCKFILES_HASH}"',
     );
     expect(restoreAndSave?.uses).toBe(
-      "actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830",
+      "actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb",
     );
     expect(restoreAndSave?.if).toBe(
       "steps.context.outputs.can-save == 'true' && inputs.save == 'true'",
     );
     expect(restoreOnly?.uses).toBe(
-      "actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830",
+      "actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb",
     );
     expect(restoreOnly?.if).toBe(
       "steps.context.outputs.can-save != 'true' || inputs.save != 'true'",
@@ -413,12 +413,12 @@ it("shares static task snapshots only after validation using the npm cache owner
     (step) => step.name === "Save validated static task cache",
   );
   expect(restore?.uses).toBe(
-    "actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830",
+    "actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb",
   );
   expect(restore?.if).toBe("needs.changes.outputs.code == 'true'");
   expect(restore?.with).toMatchObject({ path: ".turbo/cache/" });
   expect(save?.uses).toBe(
-    "actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830",
+    "actions/cache/save@9255dc7a253b0ccc959486e2bca901246202afeb",
   );
   expect(save?.if).toContain("success()");
   expect(save?.if).toContain("steps.npm-cache.outputs.can-save == 'true'");
@@ -438,7 +438,7 @@ it("shares static task snapshots only after validation using the npm cache owner
     (step) => step.name === "Save Knip analysis cache",
   );
   expect(deepSave?.uses).toBe(
-    "actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830",
+    "actions/cache/save@9255dc7a253b0ccc959486e2bca901246202afeb",
   );
   expect(deepSave?.if).toContain("success()");
   expect(deepSave?.if).toContain("steps.npm-cache.outputs.can-save == 'true'");

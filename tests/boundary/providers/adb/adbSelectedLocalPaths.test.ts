@@ -20,7 +20,7 @@ const sourceBytes = "selected native bytes";
 const pulledBytes = "pulled fixture";
 const bugreportBytes = "bugreport fixture";
 const png = Buffer.from(
-  "89504e470d0a1a0a0000000d494844520000000400000003",
+  "89504e470d0a1a0a0000000d49484452000000040000000308020000003b963991",
   "hex",
 );
 const digest = (bytes: string | Buffer) =>
@@ -110,7 +110,7 @@ if [ "$3" = push ] || [ "$3" = install ]; then
   printf 'Success\\n'; exit 0
 fi
 if [ "$3" = pull ]; then printf '${pulledBytes}' > "$5"; exit 0; fi
-if [ "$3" = exec-out ]; then printf '\\211PNG\\r\\n\\032\\n\\0\\0\\0\\rIHDR\\0\\0\\0\\004\\0\\0\\0\\003'; exit 0; fi
+if [ "$3" = exec-out ]; then printf '\\x89\\x50\\x4e\\x47\\x0d\\x0a\\x1a\\x0a\\x00\\x00\\x00\\x0d\\x49\\x48\\x44\\x52\\x00\\x00\\x00\\x04\\x00\\x00\\x00\\x03\\x08\\x02\\x00\\x00\\x00\\x3b\\x96\\x39\\x91'; exit 0; fi
 if [ "$3" = bugreport ]; then
   printf '${bugreportBytes}' > "$4/bugreport.zip"
   printf 'Bug report copied to %s/bugreport.zip\\n' "$4"; exit 0

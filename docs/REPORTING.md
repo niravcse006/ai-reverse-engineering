@@ -18,11 +18,11 @@ Schema: `rea.investigation-report.v1`.
 
 ## Finding classes
 
-| Kind in the document | Meaning |
-| --- | --- |
-| `confidence: observed` and `verified: true` | Directly observed from headers, hashes, or scanned strings |
-| `confidence: derived` / `inferred` | Computed from those observations |
-| `ai` section | Interpretation. Not observed fact. `verified` on security notes is always `false` |
+| Kind in the document                        | Meaning                                                                           |
+| ------------------------------------------- | --------------------------------------------------------------------------------- |
+| `confidence: observed` and `verified: true` | Directly observed from headers, hashes, or scanned strings                        |
+| `confidence: derived` / `inferred`          | Computed from those observations                                                  |
+| `ai` section                                | Interpretation. Not observed fact. `verified` on security notes is always `false` |
 
 The renderer labels the AI section **AI interpretation (unverified)**.
 

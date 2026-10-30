@@ -14,6 +14,7 @@ import {
   UnsupportedMachoMetadataFormatError,
   parseMachoLayout,
 } from "../../../../src/native/AppleMachoSelection.js";
+import { BinaryFormatFailure } from "../../../../src/native/metadata/BinaryContainer.js";
 import { NativeMacOSProvider } from "../../../../src/native/NativeMacOSProvider.js";
 import { NativeFixtureRunner } from "../../../fixtures/nativeCommands.js";
 import { ok } from "../../../../src/domain/result.js";
@@ -171,7 +172,10 @@ describe("native Objective-C class metadata capability fallback", () => {
     } catch (cause: unknown) {
       mismatchedCpuFailure = cause;
     }
-    expect(mismatchedCpuFailure).toBeInstanceOf(TypeError);
+    expect(mismatchedCpuFailure).toBeInstanceOf(BinaryFormatFailure);
+    expect(mismatchedCpuFailure).toMatchObject({
+      kind: "unsupported",
+    });
     expect(mismatchedCpuFailure).not.toBeInstanceOf(
       UnsupportedMachoMetadataFormatError,
     );

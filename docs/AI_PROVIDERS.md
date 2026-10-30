@@ -5,12 +5,12 @@ working copy adds an optional outbound interface for evidence-scoped notes.
 
 ## Status
 
-| Path | Status |
-| --- | --- |
-| External agent through MCP | Implemented (upstream) |
-| `REA_AI_PROVIDER=none` | Implemented and verified |
+| Path                                    | Status                                                                         |
+| --------------------------------------- | ------------------------------------------------------------------------------ |
+| External agent through MCP              | Implemented (upstream)                                                         |
+| `REA_AI_PROVIDER=none`                  | Implemented and verified                                                       |
 | Live OpenAI/Anthropic/Ollama HTTP calls | Implemented in code; **not** verified against a real service in this workspace |
-| Exploitability claims in model JSON | Rejected by `parseAiInterpretation` (verified in unit tests) |
+| Exploitability claims in model JSON     | Rejected by `parseAiInterpretation` (verified in unit tests)                   |
 
 ## Setup
 

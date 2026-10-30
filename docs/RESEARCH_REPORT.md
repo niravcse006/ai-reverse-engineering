@@ -40,30 +40,30 @@ the external agent.
 
 ## Binary analysis and decompilation
 
-| Project | URL | License | Maintenance | Formats / capabilities | Integration |
-| --- | --- | --- | --- | --- | --- |
-| Ghidra | https://github.com/NationalSecurityAgency/ghidra | Apache-2.0 (**partially verified** from public 2026 summaries and existing REA docs) | **partially verified** public 2026 release notes cite 12.1.4 | Native decompile, many processors | **Already integrated** as optional BYO install |
-| radare2 | https://github.com/radareorg/radare2 | Mostly LGPL-3.0; some plugins GPL (**verified** from project license docs) | **partially verified** public 2026 notes cite 6.2.4 | Disassembly, scripting, debug | Not a first-class REA provider. `r2` PATH probe only |
-| Rizin | https://github.com/rizinorg/rizin | LGPL-3.0 (**verified** GitHub license) | **verified** active project | CLI analysis and debug | **Already integrated** via `REA_RIZIN_COMMAND` |
-| Cutter | https://github.com/rizinorg/cutter | GPL-3.0 (**partially verified** public summaries) | **partially verified** public 2026 notes cite v2.5.0 | GUI on Rizin | **Already integrated** as a live-bridge, not a headless default |
-| angr | https://github.com/angr/angr | BSD-2-Clause (**partially verified** public summaries) | **unverified** in this pass beyond repository existence | Symbolic execution | **Deferred**. No `src/` references |
-| FLOSS | https://github.com/mandiant/flare-floss | Apache-2.0 (**verified** LICENSE.txt) | **verified** active repository | Obfuscated-string recovery | **Deferred**. Overlaps built-in strings; valuable later as optional BYO |
-| RetDec | https://github.com/avast/retdec | MIT (**verified** LICENSE) | **verified** limited maintenance mode | LLVM decompiler | **Deferred**. High integration cost, limited maintenance |
+| Project | URL                                              | License                                                                              | Maintenance                                                  | Formats / capabilities            | Integration                                                             |
+| ------- | ------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------------------------------------------------ | --------------------------------- | ----------------------------------------------------------------------- |
+| Ghidra  | https://github.com/NationalSecurityAgency/ghidra | Apache-2.0 (**partially verified** from public 2026 summaries and existing REA docs) | **partially verified** public 2026 release notes cite 12.1.4 | Native decompile, many processors | **Already integrated** as optional BYO install                          |
+| radare2 | https://github.com/radareorg/radare2             | Mostly LGPL-3.0; some plugins GPL (**verified** from project license docs)           | **partially verified** public 2026 notes cite 6.2.4          | Disassembly, scripting, debug     | Not a first-class REA provider. `r2` PATH probe only                    |
+| Rizin   | https://github.com/rizinorg/rizin                | LGPL-3.0 (**verified** GitHub license)                                               | **verified** active project                                  | CLI analysis and debug            | **Already integrated** via `REA_RIZIN_COMMAND`                          |
+| Cutter  | https://github.com/rizinorg/cutter               | GPL-3.0 (**partially verified** public summaries)                                    | **partially verified** public 2026 notes cite v2.5.0         | GUI on Rizin                      | **Already integrated** as a live-bridge, not a headless default         |
+| angr    | https://github.com/angr/angr                     | BSD-2-Clause (**partially verified** public summaries)                               | **unverified** in this pass beyond repository existence      | Symbolic execution                | **Deferred**. No `src/` references                                      |
+| FLOSS   | https://github.com/mandiant/flare-floss          | Apache-2.0 (**verified** LICENSE.txt)                                                | **verified** active repository                               | Obfuscated-string recovery        | **Deferred**. Overlaps built-in strings; valuable later as optional BYO |
+| RetDec  | https://github.com/avast/retdec                  | MIT (**verified** LICENSE)                                                           | **verified** limited maintenance mode                        | LLVM decompiler                   | **Deferred**. High integration cost, limited maintenance                |
 
 Hopper and IDA are proprietary. REA already supports them as optional local
 engines and grants no license.
 
 ## Platform-specific tools
 
-| Area | Candidates | Finding |
-| --- | --- | --- |
-| Android | JADX, apktool, MobSF, Frida | JADX and apktool are already optional REA backends. Frida is optional. MobSF is a full product; its docs repo publishes GPL-3.0. **Rejected** as a vendored integration |
-| iOS / macOS | Hopper, native Mach-O readers, Apple application graphs | Already present. Hopper remains macOS/Linux BYO |
-| Windows PE / .NET | In-process PE/managed readers, ILSpy path, IDA/Ghidra | Already present. dnSpyEx/ILSpy stay optional BYO |
-| ELF / Linux | Header parsers, Ghidra, objdump, GDB | Already present |
-| JS / TS / Electron | Built-in JS application analysis | Already present and needs no native engine |
-| WebAssembly | WABT-backed inspect commands | Already present |
-| Firmware | binwalk/unblob/uImage/ESP readers | U-Boot/ESP/FIT support exists; binwalk/unblob remain BYO |
+| Area               | Candidates                                              | Finding                                                                                                                                                                 |
+| ------------------ | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Android            | JADX, apktool, MobSF, Frida                             | JADX and apktool are already optional REA backends. Frida is optional. MobSF is a full product; its docs repo publishes GPL-3.0. **Rejected** as a vendored integration |
+| iOS / macOS        | Hopper, native Mach-O readers, Apple application graphs | Already present. Hopper remains macOS/Linux BYO                                                                                                                         |
+| Windows PE / .NET  | In-process PE/managed readers, ILSpy path, IDA/Ghidra   | Already present. dnSpyEx/ILSpy stay optional BYO                                                                                                                        |
+| ELF / Linux        | Header parsers, Ghidra, objdump, GDB                    | Already present                                                                                                                                                         |
+| JS / TS / Electron | Built-in JS application analysis                        | Already present and needs no native engine                                                                                                                              |
+| WebAssembly        | WABT-backed inspect commands                            | Already present                                                                                                                                                         |
+| Firmware           | binwalk/unblob/uImage/ESP readers                       | U-Boot/ESP/FIT support exists; binwalk/unblob remain BYO                                                                                                                |
 
 ## Symbolic execution, debug, and instrumentation
 

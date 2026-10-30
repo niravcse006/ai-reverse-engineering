@@ -61,9 +61,9 @@ describe("product README facts", () => {
     for (const fact of README_REQUIRED_FACTS) {
       expect(readme).toContain(fact);
       await writeFile(readmePath, readme.replaceAll(fact, ""), "utf8");
-      await expect(documentationFactIssues(directory, catalog)).resolves.toEqual(
-        [`README.md: missing ${fact}`],
-      );
+      await expect(
+        documentationFactIssues(directory, catalog),
+      ).resolves.toEqual([`README.md: missing ${fact}`]);
       await writeFile(readmePath, readme, "utf8");
     }
   });

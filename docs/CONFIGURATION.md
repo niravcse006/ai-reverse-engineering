@@ -18,16 +18,16 @@ These are read by `parseAiProviderSettings`. They are **not** part of the
 strict startup `parseConfig` schema, so omitting them cannot fail process
 boot.
 
-| Variable | Purpose | Default |
-| --- | --- | --- |
-| `REA_AI_PROVIDER` | `none`, `openai-compatible`, `anthropic`, `ollama` | `none` |
-| `REA_AI_MODEL` | Model name | unset |
-| `REA_AI_ENDPOINT` | HTTPS or local endpoint | unset |
-| `REA_AI_API_KEY` | Secret; never logged or written to reports | unset |
-| `REA_AI_TIMEOUT_MS` | Request timeout | 30000 |
-| `REA_AI_RETRIES` | Reserved for later retry policy | 1 |
-| `REA_AI_TOKEN_LIMIT` | Max tokens advertised to the provider | 4096 |
-| `REA_AI_SPENDING_LIMIT_USD` | Optional budget marker | unset |
+| Variable                    | Purpose                                            | Default |
+| --------------------------- | -------------------------------------------------- | ------- |
+| `REA_AI_PROVIDER`           | `none`, `openai-compatible`, `anthropic`, `ollama` | `none`  |
+| `REA_AI_MODEL`              | Model name                                         | unset   |
+| `REA_AI_ENDPOINT`           | HTTPS or local endpoint                            | unset   |
+| `REA_AI_API_KEY`            | Secret; never logged or written to reports         | unset   |
+| `REA_AI_TIMEOUT_MS`         | Request timeout                                    | 30000   |
+| `REA_AI_RETRIES`            | Reserved for later retry policy                    | 1       |
+| `REA_AI_TOKEN_LIMIT`        | Max tokens advertised to the provider              | 4096    |
+| `REA_AI_SPENDING_LIMIT_USD` | Optional budget marker                             | unset   |
 
 A provider is ready only when `REA_AI_PROVIDER` is not `none`, an endpoint is
 set, and a key is present (Ollama may omit the key).

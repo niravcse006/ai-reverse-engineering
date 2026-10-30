@@ -9,6 +9,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { join } from "node:path";
+import { crc32 } from "node:zlib";
 import { expect, onTestFinished, test, vi } from "vitest";
 
 const adbTestHooks = vi.hoisted(() => ({
@@ -40,6 +41,29 @@ const it = test.skipIf(process.platform === "win32");
 
 const VERSION_BLOCK =
   "printf 'Android Debug Bridge version 1.0.41\\nVersion 34.0.5-stub\\nInstalled as %s\\n' \"$0\"";
+
+const SCREENCAP_PNG = (() => {
+  const bytes = Buffer.alloc(33);
+  Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]).copy(bytes);
+  bytes.writeUInt32BE(13, 8);
+  bytes.write("IHDR", 12);
+  bytes.writeUInt32BE(4, 16);
+  bytes.writeUInt32BE(3, 20);
+  bytes[24] = 8;
+  bytes[25] = 2;
+  bytes.writeUInt32BE(crc32(bytes.subarray(12, 29)), 29);
+  return bytes;
+})();
+
+const writeScreencapPng = async (root: string): Promise<void> => {
+  await writeFile(join(root, "screencap.png"), SCREENCAP_PNG);
+};
+
+const SCREENCAPPED = (root: string): string =>
+  `if [ "$1" = "-s" ] && [ "$3" = "exec-out" ]; then
+  cat "${join(root, "screencap.png")}"
+  exit 0
+fi`;
 
 const writeAdbStub = async (
   body: (root: string) => string,
@@ -1453,13 +1477,11 @@ exit 1`,
 
 it("captures the screen as a digested PNG with its dimensions", async () => {
   const { binary, root } = await writeAdbStub(
-    () => `if [ "$1" = "version" ]; then ${VERSION_BLOCK}; exit 0; fi
-if [ "$1" = "-s" ] && [ "$3" = "exec-out" ]; then
-  printf '\\211PNG\\r\\n\\032\\n\\0\\0\\0\\rIHDR\\0\\0\\0\\004\\0\\0\\0\\003'
-  exit 0
-fi
+    (directory) => `if [ "$1" = "version" ]; then ${VERSION_BLOCK}; exit 0; fi
+${SCREENCAPPED(directory)}
 exit 1`,
   );
+  await writeScreencapPng(root);
   const output = join(root, "captures");
   const result = await evidenceResult(providerOver(binary), {
     operation: "capture_adb_screen",
@@ -1476,13 +1498,11 @@ exit 1`,
 
 it("stops a screen capture aborted after adb returns but before publication", async () => {
   const { binary, root } = await writeAdbStub(
-    () => `if [ "$1" = "version" ]; then ${VERSION_BLOCK}; exit 0; fi
-if [ "$1" = "-s" ] && [ "$3" = "exec-out" ]; then
-  printf '\\211PNG\\r\\n\\032\\n\\0\\0\\0\\rIHDR\\0\\0\\0\\004\\0\\0\\0\\003'
-  exit 0
-fi
+    (directory) => `if [ "$1" = "version" ]; then ${VERSION_BLOCK}; exit 0; fi
+${SCREENCAPPED(directory)}
 exit 1`,
   );
+  await writeScreencapPng(root);
   const output = join(root, "cancelled-capture");
   const controller = new AbortController();
   adbTestHooks.afterScreencap = () => controller.abort();
@@ -2162,11 +2182,13 @@ sh -c "$*"
 
 it("preserves a screen output created while capture is running", async () => {
   const { binary, root } = await writeAdbStub(
-    (root) => `if [ "$1" = "version" ]; then ${VERSION_BLOCK}; exit 0; fi
-printf 'existing evidence' > "${join(root, "captures", "screen.png")}"
-printf '\\211PNG\\r\\n\\032\\n\\0\\0\\0\\rIHDR\\0\\0\\0\\004\\0\\0\\0\\003'
+    (directory) => `if [ "$1" = "version" ]; then ${VERSION_BLOCK}; exit 0; fi
+mkdir -p "${join(directory, "captures")}"
+printf 'existing evidence' > "${join(directory, "captures", "screen.png")}"
+cat "${join(directory, "screencap.png")}"
 `,
   );
+  await writeScreencapPng(root);
   const result = await providerOver(binary).execute({
     operation: "capture_adb_screen",
     input: { serial: "device", output_directory: join(root, "captures") },

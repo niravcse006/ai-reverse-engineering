@@ -9,7 +9,8 @@ export interface RemainingWorkflow {
 const available = (
   backends: readonly BackendAvailability[],
   id: string,
-): boolean => backends.some((backend) => backend.id === id && backend.available);
+): boolean =>
+  backends.some((backend) => backend.id === id && backend.available);
 
 const nativeFormat = (format: string): boolean =>
   format === "elf" ||
@@ -79,11 +80,12 @@ export const remainingWorkflowsFor = (
     {
       command: "inspect-with-objdump",
       usable: available(backends, "objdump") && nativeFormat(format),
-      reason: available(backends, "objdump") && nativeFormat(format)
-        ? "objdump is available for read-only disassembly of the imported path."
-        : nativeFormat(format)
-          ? "objdump is not available on PATH."
-          : "objdump inspection applies to native binaries.",
+      reason:
+        available(backends, "objdump") && nativeFormat(format)
+          ? "objdump is available for read-only disassembly of the imported path."
+          : nativeFormat(format)
+            ? "objdump is not available on PATH."
+            : "objdump inspection applies to native binaries.",
     },
     {
       command: "analyze-javascript-application",
@@ -127,7 +129,8 @@ export const nextAnalysisCommandsFor = (
   remaining
     .filter(
       (workflow) =>
-        workflow.usable && workflow.command !== "inspect-target / analyze-project",
+        workflow.usable &&
+        workflow.command !== "inspect-target / analyze-project",
     )
     .map((workflow) => `rea ${workflow.command.split(" / ")[0]} ${targetPath}`)
     .join("\n");

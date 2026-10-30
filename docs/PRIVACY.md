@@ -13,13 +13,13 @@ vendor privacy policy for third-party models.
 
 ## When data can leave the machine
 
-| Path | Leaves the machine? | What is sent | Control |
-| --- | --- | --- | --- |
-| Builtin project analysis | No | — | Always local |
-| `REA_AI_PROVIDER=none` (default) | No | — | Default |
+| Path                                    | Leaves the machine?       | What is sent                                          | Control                                                                                                                                                                                                       |
+| --------------------------------------- | ------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Builtin project analysis                | No                        | —                                                     | Always local                                                                                                                                                                                                  |
+| `REA_AI_PROVIDER=none` (default)        | No                        | —                                                     | Default                                                                                                                                                                                                       |
 | Configured `REA_AI_*` with `ai_enabled` | Yes, to `REA_AI_ENDPOINT` | Evidence JSON (findings), plus the system/user prompt | `analyze-project` calls `globalThis.fetch` only when the job enables AI **and** a provider is ready; spend limit `0` refuses the call; report records host, provider, model, and byte count — not the API key |
-| External coding agent over MCP | Depends on that agent | Tool results the agent already received | The agent vendor’s policy |
-| Browser / ADB / Frida commands | Possibly | Whatever those tools contact | Explicit command only |
+| External coding agent over MCP          | Depends on that agent     | Tool results the agent already received               | The agent vendor’s policy                                                                                                                                                                                     |
+| Browser / ADB / Frida commands          | Possibly                  | Whatever those tools contact                          | Explicit command only                                                                                                                                                                                         |
 
 ## Disclosure record
 

@@ -6,20 +6,20 @@ and the controls implemented or still residual in this working copy.
 
 ## Threats
 
-| Threat | Risk | Control | Residual |
-| --- | --- | --- | --- |
-| Malicious binaries | Parser or provider crash, unexpected execution | Inspection never launches the target. Deep engines run only when the user runs a provider command | Same-user process compromise if a provider is launched |
-| Archive bombs | Disk/CPU exhaustion | Detection does not extract archives. Upstream expansion budget is 256 MiB floor / 500× encoded size | Extraction commands can still be invoked deliberately |
-| Path traversal | Write outside the project | Job/report paths checked with `isPathWithinRoot`; plugin entries reject `..` | Symlink races are not fully solved here |
-| Command injection | Shell metacharacters | Backend probe uses `fs.access`, not a shell. Existing REA process helpers avoid shell evaluation | Misconfigured BYO commands remain the operator's risk |
-| Unsafe subprocesses | Attacker-controlled argv | Project workflow does not spawn analysis engines | Dedicated backend commands still spawn owned processes |
-| Malicious plugins | Arbitrary code | Manifests are validated only; `trusted` cannot be true; entry is not imported | A future loader would reopen this risk |
-| Compromised tools | Hostile Ghidra/JADX/Rizin | BYO tools run as the current user; capability tokens bind Hopper/Ghidra bridges | Not a sandbox |
-| Prompt injection | Model follows target strings | Untrusted wrappers + JSON schema + exploitability rejection | Labels are not a complete defense |
-| Unauthorized network | Unexpected callbacks | AI HTTP runs only when endpoint/key are set and fetch is supplied | Operator-configured endpoints are trusted |
-| Secret leakage | API keys in reports/logs | Keys are read from env and not persisted in project JSON or reports | Process environment can still be dumped by the OS user |
-| Resource exhaustion | Large files | 8 KiB format probe, 64 KiB string scan, file hashing of the real file | Hashing a huge file still reads it |
-| Unsafe dynamic execution | Running malware | `optional_dynamic` is skipped unless authorized, and still does not execute | Other CLI commands can instrument or debug if the user asks |
+| Threat                   | Risk                                           | Control                                                                                             | Residual                                                    |
+| ------------------------ | ---------------------------------------------- | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Malicious binaries       | Parser or provider crash, unexpected execution | Inspection never launches the target. Deep engines run only when the user runs a provider command   | Same-user process compromise if a provider is launched      |
+| Archive bombs            | Disk/CPU exhaustion                            | Detection does not extract archives. Upstream expansion budget is 256 MiB floor / 500× encoded size | Extraction commands can still be invoked deliberately       |
+| Path traversal           | Write outside the project                      | Job/report paths checked with `isPathWithinRoot`; plugin entries reject `..`                        | Symlink races are not fully solved here                     |
+| Command injection        | Shell metacharacters                           | Backend probe uses `fs.access`, not a shell. Existing REA process helpers avoid shell evaluation    | Misconfigured BYO commands remain the operator's risk       |
+| Unsafe subprocesses      | Attacker-controlled argv                       | Project workflow does not spawn analysis engines                                                    | Dedicated backend commands still spawn owned processes      |
+| Malicious plugins        | Arbitrary code                                 | Manifests are validated only; `trusted` cannot be true; entry is not imported                       | A future loader would reopen this risk                      |
+| Compromised tools        | Hostile Ghidra/JADX/Rizin                      | BYO tools run as the current user; capability tokens bind Hopper/Ghidra bridges                     | Not a sandbox                                               |
+| Prompt injection         | Model follows target strings                   | Untrusted wrappers + JSON schema + exploitability rejection                                         | Labels are not a complete defense                           |
+| Unauthorized network     | Unexpected callbacks                           | AI HTTP runs only when endpoint/key are set and fetch is supplied                                   | Operator-configured endpoints are trusted                   |
+| Secret leakage           | API keys in reports/logs                       | Keys are read from env and not persisted in project JSON or reports                                 | Process environment can still be dumped by the OS user      |
+| Resource exhaustion      | Large files                                    | 8 KiB format probe, 64 KiB string scan, file hashing of the real file                               | Hashing a huge file still reads it                          |
+| Unsafe dynamic execution | Running malware                                | `optional_dynamic` is skipped unless authorized, and still does not execute                         | Other CLI commands can instrument or debug if the user asks |
 
 ## Implemented controls that were tested
 

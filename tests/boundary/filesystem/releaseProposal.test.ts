@@ -15,6 +15,7 @@ import { z } from "zod";
 
 import {
   applyReleasePleasePatch,
+  releaseProposalAuthority,
   releaseProposalSearchDepth,
 } from "../../../scripts/lib/release-proposal.mjs";
 import { createTestTempDirectory } from "../../fixtures/temporaryDirectory.js";
@@ -39,6 +40,25 @@ beforeAll(async () => {
 });
 
 afterEach(() => vi.restoreAllMocks());
+
+it("blocks official rea-agents proposals from any other repository", () => {
+  expect(
+    releaseProposalAuthority({
+      repository: "niravcse006/ai-reverse-engineering",
+      packageName: "rea-agents",
+    }),
+  ).toEqual({
+    allowed: false,
+    reason:
+      "Automatic release-please proposal is blocked: this repository is not the official rea-agents publisher.",
+  });
+  expect(
+    releaseProposalAuthority({
+      repository: "morluto/rea",
+      packageName: "rea-agents",
+    }),
+  ).toEqual({ allowed: true });
+});
 
 function respond(value: unknown, status = 200) {
   return new Response(JSON.stringify(value), {

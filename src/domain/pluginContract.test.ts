@@ -31,9 +31,9 @@ describe("plugin contract", () => {
   });
 
   it("rejects manifests that claim to be trusted", () => {
-    expect(
-      validatePluginManifest({ ...validManifest, trusted: true }).ok,
-    ).toBe(false);
+    expect(validatePluginManifest({ ...validManifest, trusted: true }).ok).toBe(
+      false,
+    );
   });
 
   it("names permissions that require operator authorization", () => {

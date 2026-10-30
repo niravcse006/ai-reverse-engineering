@@ -9,13 +9,13 @@ This report distinguishes commands that ran from work that was not executed.
 
 ## 1. Baseline and upstream reference
 
-| Item | Value |
-| --- | --- |
-| This repository | https://github.com/niravcse006/ai-reverse-engineering |
-| Starting HEAD before this increment | `092a2aa` |
-| Imported snapshot | `17ceb77ca5f2632faab8de01da4babff680eac48` |
-| Upstream reference | `d3ecf6800015f2183a298d78ffb30a266a9efd2a` (temporary tarball, not merged) |
-| Node used for tests | v22.23.4 (nvm) |
+| Item                                | Value                                                                      |
+| ----------------------------------- | -------------------------------------------------------------------------- |
+| This repository                     | https://github.com/niravcse006/ai-reverse-engineering                      |
+| Starting HEAD before this increment | `092a2aa`                                                                  |
+| Imported snapshot                   | `17ceb77ca5f2632faab8de01da4babff680eac48`                                 |
+| Upstream reference                  | `d3ecf6800015f2183a298d78ffb30a266a9efd2a` (temporary tarball, not merged) |
+| Node used for tests                 | v22.23.4 (nvm)                                                             |
 
 Baseline source tests before edits (18 passed):
 
@@ -45,25 +45,25 @@ Working tree was clean. User files were not discarded.
 
 ## 3. Changes implemented
 
-| Path | Change |
-| --- | --- |
-| `src/adb/AdbProvider.ts` | Validate screencap with `readPngHeaderDimensions` |
-| `src/application/investigationProject/RemainingWorkflows.ts` | Capability-based remaining commands |
-| `src/application/investigationProject/Workflow.ts` | Disclosure, provenance, job reuse |
-| `src/application/investigationProject/ProjectStore.ts` | Duplicate targets; reusable jobs |
-| `src/application/investigationProject/AiProvider.ts` | Refuse spend limit 0 before fetch |
-| `src/domain/aiProviderContract.ts` | `createAiDisclosure` (host only) |
-| `src/domain/investigationReport.ts` | Remaining workflows, provenance, disclosure |
-| Tests listed below | Added/updated |
-| `docs/UPSTREAM_COMPARISON.md`, `FEATURE_PARITY.md`, `IMPLEMENTATION_PLAN.md` | Audit |
-| `docs/PRIVACY.md`, `INVESTIGATION_PROJECTS.md`, `REPORTING.md`, `SUPPORTED_FORMATS.md` | Behavior docs |
+| Path                                                                                   | Change                                            |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `src/adb/AdbProvider.ts`                                                               | Validate screencap with `readPngHeaderDimensions` |
+| `src/application/investigationProject/RemainingWorkflows.ts`                           | Capability-based remaining commands               |
+| `src/application/investigationProject/Workflow.ts`                                     | Disclosure, provenance, job reuse                 |
+| `src/application/investigationProject/ProjectStore.ts`                                 | Duplicate targets; reusable jobs                  |
+| `src/application/investigationProject/AiProvider.ts`                                   | Refuse spend limit 0 before fetch                 |
+| `src/domain/aiProviderContract.ts`                                                     | `createAiDisclosure` (host only)                  |
+| `src/domain/investigationReport.ts`                                                    | Remaining workflows, provenance, disclosure       |
+| Tests listed below                                                                     | Added/updated                                     |
+| `docs/UPSTREAM_COMPARISON.md`, `FEATURE_PARITY.md`, `IMPLEMENTATION_PLAN.md`           | Audit                                             |
+| `docs/PRIVACY.md`, `INVESTIGATION_PROJECTS.md`, `REPORTING.md`, `SUPPORTED_FORMATS.md` | Behavior docs                                     |
 
 ## 4. Upstream features
 
-| Outcome | Items |
-| --- | --- |
-| Preserved | CLI/MCP/Evidence/providers from the 6.8.0 snapshot |
-| Ported | ADB PNG header validation (`f7cd4e5`) |
+| Outcome                        | Items                                                                                                     |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| Preserved                      | CLI/MCP/Evidence/providers from the 6.8.0 snapshot                                                        |
+| Ported                         | ADB PNG header validation (`f7cd4e5`)                                                                     |
 | Intentionally excluded for now | Guidance search, environment varied writes, BinarySession and native follow-ups (large, need their tests) |
 
 ## 5. Fork-specific features

@@ -16,18 +16,18 @@ Do not strip NOTICE files from npm dependencies or derived parsers.
 
 ## Research candidates (not vendored here)
 
-| Project | License verified in this pass | Bundled? |
-| --- | --- | --- |
-| Ghidra | Apache-2.0 (public / existing REA docs) | No |
-| radare2 | Mostly LGPL-3.0; some plugins GPL | No |
-| Rizin | LGPL-3.0 | No |
-| Cutter | GPL-3.0 (public summaries) | No |
-| angr | BSD-2-Clause (public summaries) | No |
-| FLOSS | Apache-2.0 (LICENSE.txt fetched) | No |
-| RetDec | MIT (LICENSE fetched); limited maintenance | No |
-| JADX / apktool | Apache-2.0 (public 2026 notes + REA docs) | No |
-| Frida | wxWindows / LGPL family (existing REA notices) | Optional npm extra only |
-| MobSF docs | GPL-3.0 | No; integration rejected |
+| Project        | License verified in this pass                  | Bundled?                 |
+| -------------- | ---------------------------------------------- | ------------------------ |
+| Ghidra         | Apache-2.0 (public / existing REA docs)        | No                       |
+| radare2        | Mostly LGPL-3.0; some plugins GPL              | No                       |
+| Rizin          | LGPL-3.0                                       | No                       |
+| Cutter         | GPL-3.0 (public summaries)                     | No                       |
+| angr           | BSD-2-Clause (public summaries)                | No                       |
+| FLOSS          | Apache-2.0 (LICENSE.txt fetched)               | No                       |
+| RetDec         | MIT (LICENSE fetched); limited maintenance     | No                       |
+| JADX / apktool | Apache-2.0 (public 2026 notes + REA docs)      | No                       |
+| Frida          | wxWindows / LGPL family (existing REA notices) | Optional npm extra only  |
+| MobSF docs     | GPL-3.0                                        | No; integration rejected |
 
 ## Attribution for this working copy
 

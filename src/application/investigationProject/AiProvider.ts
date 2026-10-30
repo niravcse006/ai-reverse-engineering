@@ -34,9 +34,15 @@ export const interpretEvidenceWithAi = async (
   if (settings.provider === "none")
     return unavailable(settings, "REA_AI_PROVIDER is unset or none.");
   if (settings.spendingLimitUsd === 0)
-    return unavailable(settings, "REA_AI_SPENDING_LIMIT_USD is 0; the request was not sent.");
+    return unavailable(
+      settings,
+      "REA_AI_SPENDING_LIMIT_USD is 0; the request was not sent.",
+    );
   const apiKey = environment.REA_AI_API_KEY;
-  if (settings.provider !== "ollama" && (apiKey === undefined || apiKey.length === 0))
+  if (
+    settings.provider !== "ollama" &&
+    (apiKey === undefined || apiKey.length === 0)
+  )
     return unavailable(settings, "REA_AI_API_KEY is not configured.");
   if (settings.endpoint === null)
     return unavailable(settings, "REA_AI_ENDPOINT is not configured.");
@@ -75,7 +81,9 @@ export const interpretEvidenceWithAi = async (
     if (!response.ok)
       return unavailable(settings, `HTTP ${String(response.status)}`);
     const payload = (await response.json()) as {
-      readonly choices?: readonly { readonly message?: { readonly content?: string } }[];
+      readonly choices?: readonly {
+        readonly message?: { readonly content?: string };
+      }[];
     };
     const content = payload.choices?.[0]?.message?.content;
     if (content === undefined)
@@ -109,10 +117,7 @@ export const aiProviderStatus = (
       environment.REA_AI_API_KEY.length > 0);
   return {
     settings,
-    ready:
-      settings.provider !== "none" &&
-      settings.endpoint !== null &&
-      hasKey,
+    ready: settings.provider !== "none" && settings.endpoint !== null && hasKey,
   };
 };
 

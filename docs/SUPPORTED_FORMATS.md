@@ -7,14 +7,14 @@ Two layers exist. Do not treat a detection label as a complete analysis path.
 Source: `src/domain/formatRegistry.ts`. Probe is 8 KiB. Tests:
 `src/domain/formatRegistry.test.ts`.
 
-| Format | Detection | Project analysis | Deep / family command |
-| --- | --- | --- | --- |
-| ELF / PE / Mach-O / DOS MZ | Executable header parser | Hash, arch, strings | `inspect` / `analyze` / `decompile` if a provider is installed |
-| ZIP / APK / IPA / JAR / HAP | ZIP magic + name helpers | Hash + format name | `inspect-android-package`, resource commands |
-| WASM | `\0asm` magic | Hash + format name | `inspect-wasm-artifact` |
-| DEX | `dex\n` magic | Hash + format name | Android commands |
-| JS / TS | Extension plus source-repository directory | Hash; strings if a file | `analyze-javascript-application` |
-| empty / unknown | Size or unrecognized prefix | Import of empty files is refused | — |
+| Format                      | Detection                                  | Project analysis                 | Deep / family command                                          |
+| --------------------------- | ------------------------------------------ | -------------------------------- | -------------------------------------------------------------- |
+| ELF / PE / Mach-O / DOS MZ  | Executable header parser                   | Hash, arch, strings              | `inspect` / `analyze` / `decompile` if a provider is installed |
+| ZIP / APK / IPA / JAR / HAP | ZIP magic + name helpers                   | Hash + format name               | `inspect-android-package`, resource commands                   |
+| WASM                        | `\0asm` magic                              | Hash + format name               | `inspect-wasm-artifact`                                        |
+| DEX                         | `dex\n` magic                              | Hash + format name               | Android commands                                               |
+| JS / TS                     | Extension plus source-repository directory | Hash; strings if a file          | `analyze-javascript-application`                               |
+| empty / unknown             | Size or unrecognized prefix                | Import of empty files is refused | —                                                              |
 
 ## Upstream family inspectors (snapshot)
 

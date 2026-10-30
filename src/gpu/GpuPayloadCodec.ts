@@ -1,4 +1,5 @@
 import { nodeCodecResult } from "../compression/NodeCodecResult.js";
+import { completeZstdFrameLength } from "../compression/zstdFrame.js";
 import { constants, inflate, zstdDecompress } from "node:zlib";
 import { promisify } from "node:util";
 import { assertArtifactReadActive } from "../artifacts/ArtifactFileOperation.js";
@@ -38,6 +39,11 @@ export const decodeGpuPayloadStream = async (
     consumed > bytes.length
   )
     rejectGpu("GPU decoder returned an invalid complete codec extent");
+  if (
+    compression === "zstd" &&
+    completeZstdFrameLength(bytes.subarray(0, consumed)) !== consumed
+  )
+    rejectGpu("GPU Zstandard payload is truncated or not a complete frame");
   return { buffer: decoded, consumedBytes: consumed };
 };
 export const decodeGpuPayload = async (

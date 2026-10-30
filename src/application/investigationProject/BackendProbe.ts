@@ -35,9 +35,7 @@ const executableOnPath = async (
   return false;
 };
 
-const configuredPath = async (
-  value: string | undefined,
-): Promise<boolean> => {
+const configuredPath = async (value: string | undefined): Promise<boolean> => {
   if (value === undefined || value.length === 0) return false;
   try {
     await access(value, constants.F_OK);
@@ -54,15 +52,19 @@ const configuredPath = async (
 export const probeAnalysisBackends = async (
   environment: Readonly<Record<string, string | undefined>> = process.env,
 ): Promise<readonly BackendAvailability[]> => {
-  const hopperConfigured = await configuredPath(environment.HOPPER_LAUNCHER_PATH);
+  const hopperConfigured = await configuredPath(
+    environment.HOPPER_LAUNCHER_PATH,
+  );
   const ghidraConfigured = await configuredPath(environment.GHIDRA_INSTALL_DIR);
   const idaConfigured = await configuredPath(environment.REA_IDA_MCP_CONFIG);
   const kunaCommand = environment.REA_KUNA_COMMAND;
   const kunaAvailable =
-    kunaCommand !== undefined && (await executableOnPath(kunaCommand, environment));
+    kunaCommand !== undefined &&
+    (await executableOnPath(kunaCommand, environment));
   const jadxCommand = environment.REA_JADX_COMMAND ?? environment.REA_JADX_PATH;
   const jadxAvailable =
-    jadxCommand !== undefined && (await executableOnPath(jadxCommand, environment));
+    jadxCommand !== undefined &&
+    (await executableOnPath(jadxCommand, environment));
   const rizinCommand = environment.REA_RIZIN_COMMAND ?? "rizin";
   const rizinAvailable = await executableOnPath(rizinCommand, environment);
   const radareAvailable = await executableOnPath("r2", environment);
@@ -76,7 +78,8 @@ export const probeAnalysisBackends = async (
       family: "deep",
       available: true,
       configured: true,
-      reason: "Header parsing, hashing, and string extraction are always available.",
+      reason:
+        "Header parsing, hashing, and string extraction are always available.",
     },
     {
       id: "hopper",
@@ -145,7 +148,8 @@ export const probeAnalysisBackends = async (
       id: "apktool",
       family: "auxiliary",
       available: apktoolAvailable,
-      configured: environment.REA_APKTOOL_COMMAND !== undefined || apktoolAvailable,
+      configured:
+        environment.REA_APKTOOL_COMMAND !== undefined || apktoolAvailable,
       reason: apktoolAvailable
         ? "apktool is available."
         : "apktool is not available.",
@@ -154,7 +158,8 @@ export const probeAnalysisBackends = async (
       id: "objdump",
       family: "optional",
       available: objdumpAvailable,
-      configured: environment.REA_OBJDUMP_COMMAND !== undefined || objdumpAvailable,
+      configured:
+        environment.REA_OBJDUMP_COMMAND !== undefined || objdumpAvailable,
       reason: objdumpAvailable
         ? "objdump is available."
         : "objdump is not available.",

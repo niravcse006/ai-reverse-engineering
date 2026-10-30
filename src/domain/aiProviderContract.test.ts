@@ -28,7 +28,8 @@ describe("AI provider contract", () => {
       security_notes: [
         {
           title: "Unchecked copy",
-          description: "The copy length is not visible in the supplied evidence.",
+          description:
+            "The copy length is not visible in the supplied evidence.",
           evidence_ids: ["ev_strings"],
           verified: false,
           exploitability_claimed: false,

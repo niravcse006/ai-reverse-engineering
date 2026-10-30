@@ -113,7 +113,9 @@ describe("format registry", () => {
       fileSize: 12,
     });
     expect(result.ok && result.value.supported).toBe(false);
-    expect(result.ok && result.value.diagnostic).toContain("No registered magic");
+    expect(result.ok && result.value.diagnostic).toContain(
+      "No registered magic",
+    );
   });
 
   it("extracts printable strings and ignores short noise", () => {

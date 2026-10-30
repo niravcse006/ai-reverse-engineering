@@ -1,4 +1,7 @@
-import type { InvestigationFinding, InvestigationJob } from "./investigationProject.js";
+import type {
+  InvestigationFinding,
+  InvestigationJob,
+} from "./investigationProject.js";
 import type { FormatDetection } from "./formatRegistry.js";
 import type { AiDisclosure, AiInterpretation } from "./aiProviderContract.js";
 
@@ -117,7 +120,9 @@ export const renderInvestigationReportMarkdown = (
       "",
     );
     for (const note of report.ai.function_notes) {
-      lines.push(`- ${escapeMarkdown(note.function_id)}: ${escapeMarkdown(note.explanation)}`);
+      lines.push(
+        `- ${escapeMarkdown(note.function_id)}: ${escapeMarkdown(note.explanation)}`,
+      );
     }
     for (const note of report.ai.security_notes) {
       lines.push(
