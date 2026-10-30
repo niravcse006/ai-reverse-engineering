@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   access,
@@ -98,6 +99,8 @@ const fixture = async () => {
   await symlink(join(physical, "nested"), join(root, "alias"));
   const binary = join(root, "adb");
   const quote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
+  // Write PNG bytes once. POSIX /bin/sh (dash on Ubuntu) cannot emit \xHH.
+  await writeFile(join(root, "screencap.png"), png);
   await writeFile(
     binary,
     `#!/bin/sh
@@ -110,7 +113,7 @@ if [ "$3" = push ] || [ "$3" = install ]; then
   printf 'Success\\n'; exit 0
 fi
 if [ "$3" = pull ]; then printf '${pulledBytes}' > "$5"; exit 0; fi
-if [ "$3" = exec-out ]; then printf '\\x89\\x50\\x4e\\x47\\x0d\\x0a\\x1a\\x0a\\x00\\x00\\x00\\x0d\\x49\\x48\\x44\\x52\\x00\\x00\\x00\\x04\\x00\\x00\\x00\\x03\\x08\\x02\\x00\\x00\\x00\\x3b\\x96\\x39\\x91'; exit 0; fi
+if [ "$3" = exec-out ]; then /bin/cat ${quote(join(root, "screencap.png"))}; exit 0; fi
 if [ "$3" = bugreport ]; then
   printf '${bugreportBytes}' > "$4/bugreport.zip"
   printf 'Bug report copied to %s/bugreport.zip\\n' "$4"; exit 0
@@ -136,6 +139,23 @@ exit 1
     service: new AdbDeviceAnalysisService(provider),
   };
 };
+
+it("emits owned screencap PNG bytes from the POSIX adb stub", async () => {
+  const f = await fixture();
+  const argv = ["-s", "fixture", "exec-out", "screencap"] as const;
+  const result = spawnSync(join(f.root, "adb"), [...argv], {
+    encoding: "buffer",
+  });
+  expect(result.status).toBe(0);
+  expect(result.stdout.equals(png)).toBe(true);
+  const dash = spawnSync("dash", [join(f.root, "adb"), ...argv], {
+    encoding: "buffer",
+  });
+  if (dash.error && "code" in dash.error && dash.error.code === "ENOENT")
+    return;
+  expect(dash.status).toBe(0);
+  expect(dash.stdout.equals(png)).toBe(true);
+});
 
 it.each(["push_adb_file", "install_adb_package"] as const)(
   "preserves native symlink traversal in %s snapshots and Evidence",
