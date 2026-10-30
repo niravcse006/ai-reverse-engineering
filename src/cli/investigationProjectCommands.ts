@@ -18,6 +18,7 @@ import {
   listInvestigationJobs,
   loadInvestigationJob,
   loadInvestigationProject,
+  investigationProjectPaths,
 } from "../application/investigationProject/ProjectStore.js";
 import {
   importInvestigationTarget,
@@ -26,7 +27,6 @@ import {
 } from "../application/investigationProject/Workflow.js";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { investigationProjectPaths } from "../application/investigationProject/ProjectStore.js";
 
 const cliError = (error: AnalysisError): JsonValue => ({
   error: "Analysis failed",
@@ -65,7 +65,8 @@ export const registerInvestigationProjectCommands = (
   });
 
   cli.command(CLI_COMMANDS.importTarget, {
-    description: "Import a target into an investigation project without executing it",
+    description:
+      "Import a target into an investigation project without executing it",
     args: z.object({
       path: localPathStringSchema.describe("Target file or directory"),
     }),
@@ -110,10 +111,11 @@ export const registerInvestigationProjectCommands = (
   });
 
   cli.command(CLI_COMMANDS.analyzeProject, {
-    description:
-      "Run the static investigation workflow for an imported target",
+    description: "Run the static investigation workflow for an imported target",
     options: z.object({
-      project: localPathStringSchema.describe("Investigation project directory"),
+      project: localPathStringSchema.describe(
+        "Investigation project directory",
+      ),
       target: z.string().min(1).describe("Imported target id"),
       authorizeDynamic: z
         .boolean()
@@ -147,18 +149,28 @@ export const registerInvestigationProjectCommands = (
   cli.command(CLI_COMMANDS.generateReport, {
     description: "Regenerate Markdown and JSON reports for a completed job",
     options: z.object({
-      project: localPathStringSchema.describe("Investigation project directory"),
+      project: localPathStringSchema.describe(
+        "Investigation project directory",
+      ),
       job: z.string().min(1).describe("Job id"),
     }),
     run: ({ options }) =>
       withCommandCancellation((signal) =>
         logCliCommand(logger, CLI_COMMANDS.generateReport, async () => {
-          const analyzed = await loadInvestigationJob(options.project, options.job);
+          const analyzed = await loadInvestigationJob(
+            options.project,
+            options.job,
+          );
           if (!analyzed.ok) return cliError(analyzed.error);
           const rerun = await runInvestigationWorkflow(
             options.project,
             analyzed.value.target_id,
-            { resumeJobId: options.job, regenerateReport: true, environment, signal },
+            {
+              resumeJobId: options.job,
+              regenerateReport: true,
+              environment,
+              signal,
+            },
           );
           return rerun.ok
             ? rerun.value.job.report_paths
@@ -170,13 +182,18 @@ export const registerInvestigationProjectCommands = (
   cli.command(CLI_COMMANDS.resumeJob, {
     description: "Resume an interrupted or failed investigation job",
     options: z.object({
-      project: localPathStringSchema.describe("Investigation project directory"),
+      project: localPathStringSchema.describe(
+        "Investigation project directory",
+      ),
       job: z.string().min(1).describe("Job id"),
     }),
     run: ({ options }) =>
       withCommandCancellation((signal) =>
         logCliCommand(logger, CLI_COMMANDS.resumeJob, async () => {
-          const existing = await loadInvestigationJob(options.project, options.job);
+          const existing = await loadInvestigationJob(
+            options.project,
+            options.job,
+          );
           if (!existing.ok) return cliError(existing.error);
           const resumed = await runInvestigationWorkflow(
             options.project,
@@ -249,13 +266,14 @@ export const registerInvestigationProjectCommands = (
           if (!jobs.ok) return cliError(jobs.error);
           return {
             project: project.value,
-            jobs: jobs.value.map((job) => ({
+            jobs: jobs.value.jobs.map((job) => ({
               job_id: job.job_id,
               target_id: job.target_id,
               status: job.status,
               cache_key: job.cache_key,
               report_paths: job.report_paths,
             })),
+            unreadable_jobs: jobs.value.unreadable,
             backends: await probeAnalysisBackends(environment),
             ai: aiProviderStatus(environment),
           };

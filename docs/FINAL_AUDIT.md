@@ -1,10 +1,10 @@
 # Final audit
 
-Date: 2026-10-29.
+Date: 2026-10-30.
 Workspace: `/Users/niravsoni/Projects/rea`.
 Repository: https://github.com/niravcse006/ai-reverse-engineering
-HEAD at start of this increment: `90a56fcd63ca3576679a173bb9fc58ea36b08200`
-(matched `origin/main`, clean tree).
+HEAD at start of this increment: `6b769aabe56851923633be18ea6acd7f9a3f3d6f`
+(matched `origin/main`; this increment is uncommitted).
 
 This is the authoritative current-state summary. Historical reports:
 [FINAL_IMPLEMENTATION_REPORT.md](FINAL_IMPLEMENTATION_REPORT.md),
@@ -20,11 +20,11 @@ ran**. It does not claim complete upstream parity or production readiness.
 
 | Item                           | Value                                                                  |
 | ------------------------------ | ---------------------------------------------------------------------- |
-| Local / GitHub `main` at start | `90a56fcd63ca3576679a173bb9fc58ea36b08200`                             |
+| Local / GitHub `main` at start | `6b769aabe56851923633be18ea6acd7f9a3f3d6f`                             |
 | Compatible upstream release    | rea-agents **6.8.0** `160d821ac9a0310afcb8d1fc427862dd6508add5`        |
 | Imported snapshot              | `17ceb77ca5f2632faab8de01da4babff680eac48`                             |
-| Previous pinned upstream tip   | `1ef5918179d3cb77b8868bd117de662cbd7099ab` (ahead 12)                  |
-| Upstream `main` this increment | `34577eb1cc264000a176ded68e5ebf8aba430edd` (ahead 17)                  |
+| Previous pinned upstream tip   | `34577eb1cc264000a176ded68e5ebf8aba430edd` (ahead 17)                  |
+| Upstream `main` this increment | `317bf3fe235e655b2d752d3be261cc0da7d00f2b` (ahead 40)                  |
 | Node used                      | v22.23.4 Darwin arm64 (`.nvmrc` 24.22.1 is not installed)              |
 | Identity                       | `rea-agents`, `io.github.morluto/rea` — **not renamed, not published** |
 
@@ -32,15 +32,14 @@ ran**. It does not claim complete upstream parity or production readiness.
 
 ## 2. Defects fixed this increment
 
-| Defect                                                                                       | Files                                                                                      | Tests                                                                                         |
-| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
-| Cancelled oversized JSON / Evidence-bundle reads were reported as `EvidenceFileError` (`io`) | `JsonFiles.ts`                                                                             | `bundleComparisonCancellation.test.ts`, oversized-read cases in `evidenceBundleFiles.test.ts` |
-| BinarySession mutation retirement dropped later cancellation                                 | `BinarySession.ts`, `BinarySessionPort.ts`, `externalMutationAdmission.ts`, Rizin register | `gdbRetirementCancellation.test.ts` (7), new BinarySession composition cases                  |
-| Linux token-open ENOENT/ESRCH races could lose ownership corroboration                       | `ProcessOwnership.ts`, `ProcessOwnershipObservation.ts`, `ProcessRunTokenObservations.ts`  | `ProcessOwnership.nativeExit.test.ts` + exit-scope (135 passed, 2 Linux-only skipped)         |
-| Browser source-map declaration uncertainty was dropped from capture diffs                    | `CdpCaptureEventHandlers.ts`, `webCaptureDiff.ts`                                          | `cdpCaptureScriptMetadata.test.ts`, `webCaptureDiff.test.ts`, `browserCli.test.ts`            |
+| Defect                                                         | Files                                                | Tests                                                                                |
+| -------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `listInvestigationJobs` skipped unreadable job files           | `ProjectStore.ts`, `investigationProjectCommands.ts` | Workflow + CLI investigation tests (15 passed). `unreadable_jobs` uses `userMessage` |
+| README rewrite dropped required MCP catalog / agent fact links | `README.md`                                          | `docs:check` + 9 readme-consistency tests                                            |
 
-Cache invalidation, AI environment pass-through, and FAT-prefix classification
-from the previous increment remain in the tree and were not rewritten.
+Prior increment (already on `6b769aa`): JSON-cancellation unwrap, BinarySession
+retirement cancel, Linux ownership corroboration, browser source-map
+uncertainty. Those remain in the tree and were not rewritten.
 
 ## 3. MCP classification (Priority 1)
 
@@ -56,29 +55,28 @@ npm run test:mcp
 | Environment | Unrestricted local machine, not the agent sandbox              |
 | Node / OS   | v22.23.4 Darwin arm64                                          |
 | Exit code   | **1**                                                          |
-| Test files  | **1 failed / 246 passed / 2 skipped** (249)                    |
-| Tests       | **1 failed / 1609 passed / 13 skipped** (1623)                 |
-| Duration    | 1074.83 s (vitest); wall ~1218.9 s including pretest compile   |
+| Test files  | **4 failed / 244 passed / 2 skipped** (250)                    |
+| Tests       | **5 failed / 1612 passed / 13 skipped** (1630)                 |
+| Duration    | 1758.23 s (vitest); wall ~1766.9 s including pretest compile   |
 | Skipped     | `firmwareMcp.test.ts` (1), `javascriptRecoveryMcp.test.ts` (3) |
 
-The single failure, classified from the stack and a focused reproduction:
+The previous product defect, `bundleComparisonCancellation`, **passed** in this
+full re-run (432 ms). The five failures this run:
 
-| File / test                                                                              | Classification                  | Evidence                                                                                                                                    | Outcome this increment                                         |
-| ---------------------------------------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `bundleComparisonCancellation.test.ts` — leaves the session unchanged after cancellation | **1. Confirmed product defect** | Expected `AnalysisCancelledError`; received `EvidenceFileError` (`io`) whose cause was `AbortError` wrapping `JsonInputCancellationFailure` | Fixed in `JsonFiles.ts`. Focused retest: **1 passed** (109 ms) |
+| File / test                                         | Classification                          | Evidence                                                            | Focused retest            |
+| --------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------- | ------------------------- |
+| `artifactMcp.inlineInventory` full + compact        | **2. Environment / suite-load timeout** | Vitest 30s timeout. Same cases took 12.6s and 11.4s focused         | **4 passed** in that file |
+| `nativeInventoryViewsMcp` complete/summary identity | **2. Environment / suite-load timeout** | Vitest 30s timeout during `connectGhidraMcp`. Focused: 10.0s        | **4 passed** in that file |
+| `webBundleViewsMcp` evidence-file paging            | **2. Environment / suite-load timeout** | Vitest 30s timeout. Focused: 10.0s                                  | **2 passed** in that file |
+| `contractPresentation` reversed catalog             | **2. Environment / suite-load**         | Child `execFile` failed under the 20s fixture budget. Focused: 8.5s | **1 passed**              |
 
-Not classified as environmental: the test spawned no restricted helper, ran
-unsandboxed in 30 ms, and reproduced as a typed-error mismatch.
+Focused command (exit 0): 4 files, **11 passed**, 38.46 s.
 
-Files that previously failed in the sandbox and passed in this full unsandboxed
-run include Ghidra reopen, Rizin pending output and output preservation, pcap
-allocation, Frida MCP, Flutter MCP, environment serve writes, native Mach-O
-summary, and the earlier 8-file focused set. Those prior sandbox failures are
-**environment / sandbox**, not product defects.
+Do not treat the full suite as green. Timeouts were not weakened to force a
+pass. No new product defect was confirmed after focused reproduction.
 
-**Confirmed product defects remaining in the full MCP suite:** none observed
-after the focused retest of the one failure. The full suite was **not**
-re-run after that fix. Do not treat the suite as green.
+The +7 test count versus the prior 1623-test run is
+`gdbRetirementCancellation.test.ts`, which passed in this full run.
 
 ## 4. Upstream ports (Priority 3 / 4)
 
@@ -123,24 +121,27 @@ and no confidential binaries. Re-ran this increment:
 
 ## 6. Commands run this increment
 
-| Command                                                                                        | Exit | Result                                                            |
-| ---------------------------------------------------------------------------------------------- | ---- | ----------------------------------------------------------------- |
-| `npm run upstream:drift`                                                                       | 0    | Tip `34577eb`, ahead 17                                           |
-| `npm run test:mcp` (unsandboxed)                                                               | 1    | 1 failed / 1609 passed / 13 skipped                               |
-| `npm run test:focused --` bundleComparisonCancellation + evidenceBundleFiles + gdb + browser   | 0    | 5 files, **100 passed** (includes the previous MCP failure)       |
-| `npm run test:focused -- tests/boundary/cli/browserCli.test.ts`                                | 0    | 14 passed, including source-map omission CLI                      |
-| `npm run test:local --` BinarySession + restoration/status/liveness                            | 0    | 4 files, **82 passed**                                            |
-| `npm run test:local --` ProcessOwnership nativeExit/exitScope/test/exiting/validation/identity | 0    | 6 files, **135 passed / 2 skipped**                               |
-| `npm run test:local --` AiProvider + aiProviderContract                                        | 0    | 2 files, **8 passed**                                             |
-| `npm run check:fast`                                                                           | 0    | typecheck + lint                                                  |
-| `npm run docs:check`                                                                           | 0    | generated-doc validation + 9 readme-consistency tests             |
-| `npm audit --omit=dev`                                                                         | 0    | 0 production vulnerabilities                                      |
-| `npm pack --dry-run`                                                                           | 0    | `rea-agents-6.8.0.tgz` listed                                     |
-| `npm test`                                                                                     | —    | **NOT RUN**                                                       |
-| `npm run check:pr`                                                                             | —    | **NOT RUN** (complete local gate)                                 |
-| `npm run verify:package`                                                                       | —    | **NOT RUN** this increment. Previous increment passed unsandboxed |
-| Clean temporary install of the packed tarball                                                  | —    | **NOT RUN**                                                       |
-| Live Ghidra / Hopper / IDA / JADX / Frida / external AI                                        | —    | **NOT RUN**                                                       |
+| Command                                                    | Exit                             | Result                                                                                           |
+| ---------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `npm run test:local --` Workflow + cliInvestigationProject | 0                                | 15 passed after unreadable-job reason fix                                                        |
+| `npm run check:fast`                                       | 0                                | typecheck + lint                                                                                 |
+| `npm run docs:check`                                       | 0 after README fact-link restore | generated-doc validation + 9 readme-consistency tests                                            |
+| `npm audit --omit=dev`                                     | 0                                | 0 production vulnerabilities                                                                     |
+| `npm pack --dry-run`                                       | 0                                | `rea-agents-6.8.0.tgz` (husky could not write `.git/config` in the sandbox; pack still listed)   |
+| `npm pack --pack-destination /tmp/rea-pack-verify-*`       | 0                                | 11.4 MB, 2626 files, shasum `167662072efdb328edc5141b90e9341f0738edb8`                           |
+| Clean `npm install` of that tarball                        | 0                                | 176 packages                                                                                     |
+| Packed `rea --help`                                        | 0                                | CLI banner `rea@6.8.0`                                                                           |
+| Packed `rea mcp doctor --json`                             | 0                                | healthy; 231 tools; 6 prompts                                                                    |
+| Checkout `rea --help` / `rea mcp --help`                   | 0                                | Investigation commands listed                                                                    |
+| Checkout `rea mcp doctor --json`                           | 0                                | healthy; 231 tools                                                                               |
+| Checkout stdio `initialize`                                | 0                                | `rea@6.8.0`                                                                                      |
+| Investigation smoke (`/usr/bin/true`)                      | 0                                | init → import → inspect → analyze → report → status; evidence mode `0600`; `unreadable_jobs: []` |
+| `npm run test:mcp` (unsandboxed)                           | 1                                | 5 failed / 1612 passed / 13 skipped; prior JSON-cancel case passed                               |
+| `npm run test:focused --` the four failing MCP files       | 0                                | 11 passed                                                                                        |
+| `npm test`                                                 | —                                | **NOT RUN**                                                                                      |
+| `npm run check:pr`                                         | —                                | **NOT RUN** (complete local gate)                                                                |
+| `npm run verify:package`                                   | 0                                | CLI/MCP/skill/setup checks; 231 tools; 6 prompts. Still advertises `npx -y rea-agents@6.8.0 mcp` |
+| Live Ghidra / Hopper / IDA / JADX / Frida / external AI    | —                                | **NOT RUN**                                                                                      |
 
 ## 7. Package identity and distribution
 
@@ -161,20 +162,23 @@ https://github.com/niravcse006/ai-reverse-engineering.
 ## 8. Remaining work
 
 - Guidance, environment write views, Mach-O encryption, JavaScript semantic
-  traces, .NET single-file bundles, CLI Markdown literals, and undecodable
-  symlink targets remain unported.
-- Re-run full unsandboxed `npm run test:mcp` after the JSON-cancellation fix
-  if a green-suite claim is needed.
-- `npm test`, `check:pr`, and a clean packed-install smoke remain outstanding.
+  traces, .NET single-file bundles, CLI Markdown literals, undecodable
+  symlink targets, evidence publication limits, debugger cleanup typing, and
+  Bun standalone graphs remain unported.
+- Full `npm run test:mcp` still exits 1 under load (30s timeouts). A quiet
+  machine re-run would be needed before claiming a green suite.
+- `npm test` and `check:pr` remain outstanding.
 - Owner decision before any package rename or publish.
 
 ## 9. Conclusion
 
-Three previously missing `main` behaviors are now in this tree with tests.
-The full unsandboxed MCP suite found one product defect; that defect is fixed
-and retested, but the suite was not re-run. Upstream feature completeness is
-**not** achieved. The project is **not** production-ready.
+Public GitHub source materials (README, attribution, security reporting,
+investigation listing honesty) are in this working tree. The previous
+JSON-cancellation product defect passed in the full MCP re-run. Five
+full-suite failures reproduced as load timeouts and passed focused.
+Upstream feature completeness is **not** achieved. The project is **not**
+production-ready and must not be published as `rea-agents`.
 
-Release recommendation: **local development**. Broader beta testing would
-still require a post-fix full MCP re-run plus `check:pr`. Not for production
-release.
+Release recommendation: **READY FOR PUBLIC GITHUB SOURCE**. Not ready for
+community-testing claims that require a green full MCP suite, beta packaging,
+npm publication, or production use.

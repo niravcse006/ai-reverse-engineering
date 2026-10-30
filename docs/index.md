@@ -11,7 +11,7 @@ hero:
       link: /installation
     - theme: alt
       text: View on GitHub
-      link: https://github.com/morluto/rea
+      link: https://github.com/niravcse006/ai-reverse-engineering
 
 features:
   - title: Investigate with your agent
@@ -28,7 +28,11 @@ features:
 ## Start with one command
 
 ```bash
-npx rea-agents setup
+git clone https://github.com/niravcse006/ai-reverse-engineering.git
+cd ai-reverse-engineering
+npm ci
+npm run build:cached
+node scripts/rea.mjs setup
 ```
 
 Choose your agent, review the planned changes, and approve setup. Native binary
@@ -38,7 +42,7 @@ JavaScript analysis needs no native analysis engine.
 For a first result from an extracted JavaScript application or ASAR:
 
 ```bash
-npx -y rea-agents@latest analyze-javascript-application /absolute/path/to/app --json
+node scripts/rea.mjs analyze-javascript-application /absolute/path/to/app --json
 ```
 
 See [installation and setup](./installation.md) for requirements and configuration.

@@ -21,12 +21,12 @@ This is not a penetration test and is not a security certification.
 | S15 | Medium   | **Fixed this increment** | `aiProviderStatus` used the caller environment, but `interpretEvidenceWithAi` read `process.env` for the API key             | Workflow now passes the same environment into `interpretEvidenceWithAi`                                                                                                                                                      |
 | S8  | Medium   | Open                     | Publishing this tree as npm `rea-agents` would impersonate upstream                                                          | Do not publish. Identity decision is the owner’s                                                                                                                                                                             |
 | S9  | Low      | Observed default         | MCP `--http` bind: `mainErrors.test.ts` logged refusal of `0.0.0.0` without `MCP_ALLOWED_HOSTS` / `--allowed-hosts`          | Prefer local stdio. Do not bind an unauthenticated public interface                                                                                                                                                          |
-| S10 | Low      | Open                     | `listInvestigationJobs` still skips unreadable job files                                                                     | Diagnose via `resume-job`; no silent success of a missing job                                                                                                                                                                |
+| S10 | Low      | **Fixed this increment** | `listInvestigationJobs` skipped unreadable job files                                                                         | Listing now returns `unreadable` entries; `project-status` reports `unreadable_jobs`                                                                                                                                         |
 | S11 | Info     | Accepted                 | Investigation import records the caller path; it does not copy target bytes into the project                                 | Prevents overwrite of `project.json` by import                                                                                                                                                                               |
 | S12 | Info     | Accepted                 | Deep engines / Frida / browser see the target as the current OS user when those commands are used                            | Not launched by `analyze-project`                                                                                                                                                                                            |
 | S13 | Info     | Observed                 | `writeInvestigationEvidence` writes `evidence/*.json` mode `0o600` under the project root                                    | Finding ids must match `^[A-Za-z0-9_]+$`                                                                                                                                                                                     |
 | S14 | Medium   | **Fixed this increment** | Unsandboxed `bundleComparisonCancellation` received `EvidenceFileError` (`io`) for a cancelled oversized JSON read           | `JsonFiles.ts` now unwraps `AbortError` → `JsonInputCancellationFailure` as `AnalysisCancelledError`. BinarySession `3503578` and Linux ownership `01e00da` are ported. Residual: unported `34577eb` symlink-target bytes    |
-| S16 | Medium   | Open                     | Unported `main` Mach-O encryption (`860fdd8`) and undecodable symlink targets (`34577eb`)                                    | Not merged. Residual vs current upstream `main` `34577eb`, not a newly confirmed local RCE                                                                                                                                   |
+| S16 | Medium   | Open                     | Unported `main` Mach-O encryption (`860fdd8`) and undecodable symlink targets (`34577eb`)                                    | Not merged. Residual vs current upstream `main` `317bf3f` (ahead 40), not a newly confirmed local RCE                                                                                                                        |
 
 No critical (RCE, auth bypass, or unauthenticated remote write) finding was
 confirmed in the investigation-project path.
@@ -51,9 +51,9 @@ confirmed in the investigation-project path.
 - Application JSON logs appeared in the **test runner** output. That does not
   prove stdio MCP frames are mixed with logs in production; the dedicated
   `shutdown.test.ts` file passed.
-- Unsandboxed `npm run test:mcp` this increment: 1 failed / 1609 passed /
-  13 skipped. The failure was a cancellation misclassification, now fixed and
-  focused-retested. The full suite was not re-run after the fix.
+- Unsandboxed `npm run test:mcp` this increment: 5 failed / 1612 passed /
+  13 skipped. The prior cancellation misclassification passed. The five
+  failures were 30s/20s suite-load timeouts and passed on focused retest.
 - Earlier sandboxed spawn/`posix_spawnp` failures (Frida, Rizin, pcap, Mach-O
   summary, Ghidra reopen) passed in this unsandboxed run and are not product
   defects.

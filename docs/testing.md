@@ -38,30 +38,28 @@ endpoint. Real-provider lanes remain in the table below and in
 CLI. `npm run upstream:drift` reports unported `morluto/rea` commits and does
 not merge them.
 
-### Current increment verification (2026-10-29)
+### Current increment verification (2026-10-30)
 
 Authoritative summary: [FINAL_AUDIT.md](FINAL_AUDIT.md). Commands actually run
 in this increment, with Node v22.23.4 Darwin arm64 (`.nvmrc` 24.22.1 is not
-installed). Upstream tip compared: `34577eb1cc264000a176ded68e5ebf8aba430edd`.
+installed). Upstream tip compared: `317bf3fe235e655b2d752d3be261cc0da7d00f2b`.
 
-| Command                                                                                        | Exit    | Result                                                                                                |
-| ---------------------------------------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------- |
-| `npm run upstream:drift`                                                                       | 0       | Tip `34577eb`, ahead 17                                                                               |
-| `npm run test:mcp` (unsandboxed)                                                               | 1       | **1 failed / 246 passed / 2 skipped** files; **1 failed / 1609 passed / 13 skipped** tests; 1074.83 s |
-| `npm run test:focused --` bundleComparisonCancellation + evidenceBundleFiles + gdb + browser   | 0       | 5 files, **100 passed** (includes the previous MCP failure after the JSON-cancellation fix)           |
-| `npm run test:focused -- tests/boundary/cli/browserCli.test.ts`                                | 0       | 14 passed                                                                                             |
-| `npm run test:local --` BinarySession + restoration/status/liveness                            | 0       | 4 files, 82 passed                                                                                    |
-| `npm run test:local --` ProcessOwnership nativeExit/exitScope/test/exiting/validation/identity | 0       | 6 files, 135 passed / 2 skipped                                                                       |
-| `npm run test:local --` AiProvider + aiProviderContract                                        | 0       | 2 files, 8 passed                                                                                     |
-| `npm run check:fast`                                                                           | 0       | typecheck + lint                                                                                      |
-| `npm run docs:check`                                                                           | 0       | generated-doc validation + 9 readme-consistency tests                                                 |
-| `npm audit --omit=dev`                                                                         | 0       | 0 production vulnerabilities                                                                          |
-| `npm pack --dry-run`                                                                           | 0       | listed `rea-agents-6.8.0.tgz`                                                                         |
-| `npm test`                                                                                     | not run | Full source + compiled suite not completed                                                            |
-| `npm run check:pr`                                                                             | not run | Complete local gate not completed                                                                     |
-| `npm run verify:package`                                                                       | not run | Prior increment passed unsandboxed; not re-run here                                                   |
-| Clean packed-tarball install                                                                   | not run | CLI/MCP startup from a clean temp install was not executed                                            |
-| Live Ghidra / Hopper / IDA / JADX / Frida / external AI                                        | not run | Tools or credentials unavailable or not invoked                                                       |
+| Command                                                    | Exit    | Result                                                                                                                                                                           |
+| ---------------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run test:local --` Workflow + cliInvestigationProject | 0       | 15 passed                                                                                                                                                                        |
+| `npm run check:fast`                                       | 0       | typecheck + lint                                                                                                                                                                 |
+| `npm run docs:check`                                       | 0       | generated-doc validation + 9 readme-consistency tests                                                                                                                            |
+| `npm audit --omit=dev`                                     | 0       | 0 production vulnerabilities                                                                                                                                                     |
+| `npm pack --dry-run`                                       | 0       | listed `rea-agents-6.8.0.tgz`                                                                                                                                                    |
+| Clean packed-tarball install + `rea mcp doctor`            | 0       | healthy; 231 tools; 6 prompts                                                                                                                                                    |
+| Investigation CLI smoke (`/usr/bin/true`)                  | 0       | init/import/inspect/analyze/report/status                                                                                                                                        |
+| Checkout `rea mcp doctor` and stdio initialize             | 0       | healthy `rea@6.8.0`                                                                                                                                                              |
+| `npm run test:mcp` (unsandboxed)                           | 1       | **4 failed / 244 passed / 2 skipped** files; **5 failed / 1612 passed / 13 skipped** tests; 1758.23 s. Prior JSON-cancel case passed. Failures classified as suite-load timeouts |
+| `npm run test:focused --` the four failing MCP files       | 0       | 11 passed, 38.46 s                                                                                                                                                               |
+| `npm run verify:package`                                   | 0       | Packaged CLI/MCP/skill/setup checks; 231 tools; 6 prompts                                                                                                                        |
+| `npm test`                                                 | not run | Full source + compiled suite not completed                                                                                                                                       |
+| `npm run check:pr`                                         | not run | Complete local gate not completed                                                                                                                                                |
+| Live Ghidra / Hopper / IDA / JADX / Frida / external AI    | not run | Tools or credentials unavailable or not invoked                                                                                                                                  |
 
 Reproduction for the investigation + native ports:
 

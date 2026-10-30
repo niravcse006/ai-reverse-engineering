@@ -273,6 +273,23 @@ describe("investigation project safety", () => {
     expect(imported.value.target.display_name).toContain("样本");
   });
 
+  it("lists unreadable job files instead of skipping them", async () => {
+    const root = await projectRoot();
+    await createInvestigationProject(root, "unreadable");
+    const { listInvestigationJobs } = await import("./ProjectStore.js");
+    await writeFile(join(root, "jobs", "job_corrupt.json"), "{not-json");
+    const listed = await listInvestigationJobs(root);
+    expect(listed.ok).toBe(true);
+    if (!listed.ok) throw new Error(listed.error.message);
+    expect(listed.value.jobs).toEqual([]);
+    expect(listed.value.unreadable).toEqual([
+      {
+        job_id: "job_corrupt",
+        reason: "Job document is not valid JSON.",
+      },
+    ]);
+  });
+
   it("refuses a missing target and a path-escaping job id", async () => {
     const root = await projectRoot();
     await createInvestigationProject(root, "safety");
@@ -405,7 +422,7 @@ describe("investigation cache identity", () => {
     const { listInvestigationJobs } = await import("./ProjectStore.js");
     const jobs = await listInvestigationJobs(root);
     expect(
-      jobs.ok && jobs.value.some((job) => job.status === "interrupted"),
+      jobs.ok && jobs.value.jobs.some((job) => job.status === "interrupted"),
     ).toBe(true);
   });
 });

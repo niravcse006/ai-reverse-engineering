@@ -53,8 +53,9 @@ test-timings.json
 docs/.vitepress/cache/
 docs/.vitepress/dist/
 
-# Local upload archives
+# Local upload archives and accidental npm pack output
 /rea.zip
+/*.tgz
 
 # OS
 .DS_Store

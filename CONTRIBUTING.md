@@ -1,6 +1,12 @@
-# Contributing to REA
+# Contributing
 
-REA welcomes focused bug fixes, documentation improvements, tests, and reverse-engineering workflows. For large contract or architecture changes, explain the intended scope and link the relevant issue or design discussion.
+This repository is **niravcse006/ai-reverse-engineering**, an independent
+working copy of REA. Issues and pull requests belong here:
+https://github.com/niravcse006/ai-reverse-engineering
+
+Focused bug fixes, documentation improvements, tests, and reverse-engineering
+workflows are welcome. For large contract or architecture changes, explain the
+intended scope and link the relevant issue or design discussion.
 
 Investigation-project work lives under `src/domain/` and
 `src/application/investigationProject/`. Do not load plugin JavaScript. Do not

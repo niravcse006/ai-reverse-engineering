@@ -1,8 +1,13 @@
 # Security Policy
 
+This page covers **niravcse006/ai-reverse-engineering**, an independent working
+copy of REA. It is not a security certification.
+
 ## Supported versions
 
-Security fixes are provided for the latest published version of REA. Upgrade to the latest release before reporting a problem that may already have been resolved.
+This repository is a public source snapshot, not a published npm release.
+Report issues against the current `main` commit. Upstream REA security fixes
+belong to [morluto/rea](https://github.com/morluto/rea).
 
 ## Reporting a vulnerability
 
@@ -10,7 +15,13 @@ Do not disclose vulnerabilities, proof-of-concept exploits, credentials,
 private binaries, Hopper documents, or private Ghidra projects in a public
 issue.
 
-Use **Report a vulnerability** in the repository's **Security** tab as the preferred way to submit the report privately. If GitHub private reporting is unavailable to you, email [morluto@outlook.com](mailto:morluto@outlook.com). Do not open a public issue to request a private contact channel.
+For **this repository**, use **Report a vulnerability** in
+https://github.com/niravcse006/ai-reverse-engineering/security.
+If GitHub private reporting is unavailable, open a minimal public issue that
+asks for a private contact channel without including the vulnerability.
+
+Upstream REA may still be contacted at [morluto@outlook.com](mailto:morluto@outlook.com)
+for issues that reproduce on official `rea-agents`.
 
 Include the affected REA version, operating system/distribution, selected
 provider and version, impact, reproduction conditions, and any suggested

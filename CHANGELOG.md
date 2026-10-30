@@ -16,6 +16,13 @@
 
 - ADB screencap now validates PNG signature and IHDR via `readPngHeaderDimensions` (upstream `f7cd4e5`).
 - `REA_AI_SPENDING_LIMIT_USD=0` refuses the HTTP request before a key or fetch is used.
+- `project-status` reports unreadable job files instead of omitting them.
+- Cancelled oversized Evidence-bundle reads stay `AnalysisCancelledError` instead of I/O failure.
+
+### Documentation
+
+- README and docs hub describe this fork, upstream attribution, and release status.
+- Package-identity and release-readiness notes record that npm publication is blocked.
 
 ### Compatibility
 

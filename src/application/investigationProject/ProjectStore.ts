@@ -407,13 +407,21 @@ export const loadInvestigationJob = async (
     : err(inputError("resume_job", job.error, ["job_id"]));
 };
 
+export interface InvestigationJobListing {
+  readonly jobs: readonly InvestigationJob[];
+  readonly unreadable: readonly {
+    readonly job_id: string;
+    readonly reason: string;
+  }[];
+}
+
 export const findReusableCompletedJob = async (
   root: string,
   cacheKey: string,
 ): Promise<Result<InvestigationJob | null, AnalysisInputError>> => {
   const listed = await listInvestigationJobs(root);
   if (!listed.ok) return listed;
-  const reusable = listed.value.find(
+  const reusable = listed.value.jobs.find(
     (job) => job.status === "completed" && job.cache_key === cacheKey,
   );
   return ok(reusable ?? null);
@@ -421,21 +429,31 @@ export const findReusableCompletedJob = async (
 
 export const listInvestigationJobs = async (
   root: string,
-): Promise<Result<readonly InvestigationJob[], AnalysisInputError>> => {
+): Promise<Result<InvestigationJobListing, AnalysisInputError>> => {
   const paths = investigationProjectPaths(root);
   let entries: string[];
   try {
     entries = await readdir(paths.jobs);
   } catch {
-    return ok([]);
+    return ok({ jobs: [], unreadable: [] });
   }
   const jobs: InvestigationJob[] = [];
+  const unreadable: InvestigationJobListing["unreadable"][number][] = [];
   for (const entry of entries) {
     if (!entry.endsWith(".json")) continue;
-    const loaded = await loadInvestigationJob(root, basename(entry, ".json"));
+    const jobId = basename(entry, ".json");
+    const loaded = await loadInvestigationJob(root, jobId);
     if (loaded.ok) jobs.push(loaded.value);
+    else
+      unreadable.push({
+        job_id: jobId,
+        reason:
+          loaded.error.userMessage ??
+          loaded.error.issues[0]?.message ??
+          loaded.error.message,
+      });
   }
-  return ok(jobs);
+  return ok({ jobs, unreadable });
 };
 
 export const createInvestigationJob = (

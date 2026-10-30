@@ -45,7 +45,10 @@ it("exposes investigation-project commands and completes a static workflow", asy
   expect(created.parsed).toMatchObject({ name: "cli-demo" });
 
   const targetPath = join(root, "sample.so");
-  await writeFile(targetPath, Buffer.concat([elf(2, 1, 183), Buffer.from("CliREA")]));
+  await writeFile(
+    targetPath,
+    Buffer.concat([elf(2, 1, 183), Buffer.from("CliREA")]),
+  );
   const imported = await runCli([
     "import-target",
     targetPath,
@@ -72,9 +75,31 @@ it("exposes investigation-project commands and completes a static workflow", asy
   const status = await runCli(["project-status", "--project", root, "--json"]);
   expect(status.parsed).toMatchObject({
     project: { name: "cli-demo" },
+    unreadable_jobs: [],
   });
   expect(
     (status.parsed as { jobs: { status: string }[] }).jobs.some(
+      (job) => job.status === "completed",
+    ),
+  ).toBe(true);
+
+  await writeFile(join(root, "jobs", "job_corrupt.json"), "{not-json");
+  const afterCorrupt = await runCli([
+    "project-status",
+    "--project",
+    root,
+    "--json",
+  ]);
+  expect(afterCorrupt.parsed).toMatchObject({
+    unreadable_jobs: [
+      {
+        job_id: "job_corrupt",
+        reason: "Job document is not valid JSON.",
+      },
+    ],
+  });
+  expect(
+    (afterCorrupt.parsed as { jobs: { status: string }[] }).jobs.some(
       (job) => job.status === "completed",
     ),
   ).toBe(true);
