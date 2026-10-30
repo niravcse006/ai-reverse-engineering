@@ -43,15 +43,11 @@ const readPackagedGuide = async (
   relativePath: string,
   resources: ArtifactResourceScope,
 ): Promise<string> => {
-  const content = await readSkillFile(
+  return readSkillFile(
     fileURLToPath(new URL(`${SKILL_ROOT}${relativePath}`, import.meta.url)),
     resources,
+    MAX_GUIDE_FILE_BYTES,
   );
-  if (Buffer.byteLength(content, "utf8") > MAX_GUIDE_FILE_BYTES)
-    throw new Error(
-      "Installed REA guidance file exceeds the 1 MiB allowance; no partial file was indexed.",
-    );
-  return content;
 };
 
 type GuidanceBundleRead =
@@ -94,7 +90,14 @@ const readBundle = async (
   try {
     for (const relativePath of MANAGED_SKILL_FILES) {
       const content = await readGuide(relativePath);
-      bundleBytes += Buffer.byteLength(content, "utf8");
+      const fileBytes = Buffer.byteLength(content, "utf8");
+      if (fileBytes > MAX_GUIDE_FILE_BYTES)
+        return {
+          kind: "unavailable",
+          message:
+            "Installed REA guidance file exceeds the 1 MiB allowance; no partial bundle was indexed.",
+        };
+      bundleBytes += fileBytes;
       if (bundleBytes > MAX_GUIDE_BUNDLE_BYTES)
         return {
           kind: "unavailable",

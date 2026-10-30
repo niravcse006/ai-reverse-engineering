@@ -43,14 +43,16 @@ export const isManagedSkillManifest = (content: string): boolean =>
 export const readSkillFile = (
   path: string,
   resources?: ArtifactResourceScope,
+  maxBytes?: number,
 ): Promise<string> =>
-  readSkillFileSnapshot(path, resources).then(({ bytes }) =>
+  readSkillFileSnapshot(path, resources, maxBytes).then(({ bytes }) =>
     bytes.toString("utf8"),
   );
 
 const readSkillFileSnapshot = async (
   path: string,
   resources?: ArtifactResourceScope,
+  maxBytes?: number,
 ): Promise<SkillFileSnapshot> =>
   withRegularFile(
     path,
@@ -65,6 +67,16 @@ const readSkillFileSnapshot = async (
     {
       symlinks: "reject",
       ...(resources === undefined ? {} : { resources }),
+      ...(maxBytes === undefined
+        ? {}
+        : {
+            admit: (stats) => {
+              if (stats.size > maxBytes)
+                throw new Error(
+                  `Skill file exceeds the ${String(maxBytes)}-byte allowance`,
+                );
+            },
+          }),
     },
   );
 

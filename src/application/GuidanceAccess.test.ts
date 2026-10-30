@@ -124,6 +124,24 @@ it("does not treat Markdown headings inside fenced code as section boundaries", 
   await resources.close();
 });
 
+it("refuses an oversized guide file instead of indexing partial content", async () => {
+  const resources = new ArtifactResourceScope();
+  const result = await searchGuidanceWithReader(
+    { query: "module" },
+    async (path) =>
+      path === "SKILL.md" ? "x".repeat(1_048_577) : guideFixture(path),
+    resources,
+  );
+  expect(result).toMatchObject({
+    ok: true,
+    value: {
+      status: "bundle_unavailable",
+      message: expect.stringContaining("1 MiB"),
+    },
+  });
+  await resources.close();
+});
+
 it("refuses an oversized guide bundle instead of indexing partial content", async () => {
   const resources = new ArtifactResourceScope();
   const result = await searchGuidanceWithReader(

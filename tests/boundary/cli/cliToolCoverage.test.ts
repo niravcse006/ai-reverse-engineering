@@ -15,6 +15,7 @@ const CLI_COMMAND_TOOL_ALIASES = Object.freeze({
   instructions: ["read_function_instructions"],
   trace: ["trace_feature"],
   search: ["search_strings", "search_procedures"],
+  guidance: ["search_guidance", "read_guidance_section"],
   "capture-process": ["capture_process_scenario"],
   compare: ["compare_bundles"],
   "list-objdump-architectures": ["inspect_with_objdump"],
